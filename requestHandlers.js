@@ -2,15 +2,18 @@ var url = require("url");
 
 var Db = require('mongodb').Db,
 	Connection = require('mongodb').Connection,
-    Server = require('mongodb').Server;
-var client = new Db('test', new Server("205.186.145.170", 27017, {strict:true}));	
+    MongoServer = require('mongodb').Server;
+var client = new Db('test', new MongoServer("205.186.145.170", 27017, {strict:true}));	
 
 var ccHandler = require('./ccHandler.js');
+
+var fs = require("fs");
+
 
 client.open(function(err, p_client) {});
 
 
-function receiveCC(response, request, socket) {
+/*function receiveCC(response, request, socket) {
 
 	var url_parts = url.parse(request.url, true);
 	var newWord = url_parts.query.word;
@@ -57,7 +60,7 @@ function receiveCC(response, request, socket) {
 	}
 	
 
-}
+}*/
 
 function receiveChars(response, request, socket)
 {
@@ -121,7 +124,48 @@ function broadcastPhrase(sp, phrase, s) {
 	}
 }
 
-exports.receiveCC = receiveCC;
-exports.receiveChars = receiveChars;
 
+/* functions for loading from static text file */
+var doc;
+var ind, nextInd;
+var intervalID;
+
+function loadDoc(response, request, socket) {
+
+	var url_parts = url.parse(request.url, true);
+	var delay = (url_parts.query.delay) ? url_parts.query.delay : 0;
+	var docName = url_parts.query.docName;
+	//docName = '2008DebateTranscript_01.txt';
+	
+	console.log("d "+delay+" n "+docName);
+	
+	try {
+		doc = fs.readFileSync(__dirname + '/documents/' + docName, 'utf8');
+		
+		if (delay == 0)
+			ccHandler.handleChars(doc, socket);
+		else {
+			ind = 0;
+			nextInd = 0;
+			intervalID = setInterval(sendCharsFromDoc, delay, socket);
+		}
+	} catch (e) {
+		console.log(e);
+	}		
+}
+
+function sendCharsFromDoc(socket) {
+
+	if (ind < doc.length) {
+		nextInd = Math.min(ind + Math.floor((Math.random()*3)+1), doc.length);
+		ccHandler.handleChars(doc.substring(ind, nextInd), socket);
+		ind = nextInd;
+	}
+	else clearTimeout(intervalID);
+	
+}
+
+//exports.receiveCC = receiveCC;
+exports.receiveChars = receiveChars;
+exports.loadDoc = loadDoc;
 exports.ccHandler = ccHandler;
