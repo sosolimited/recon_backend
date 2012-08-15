@@ -7,32 +7,27 @@ var net = require('net');
 //for testing
 var cc = require('./ccHandler.js');
 
-var tcpServer, httpServer;
+var server;
 var io;
 var curSocket;
 
 
 function start(route, handle) {
 
-	function onRequest(request, response) {		
-		var pathname = url.parse(request.url).pathname;
-		route(handle, pathname, response, request, curSocket);
-		console.log("cursocket = "+curSocket);
-	}
-	
-	httpServer = http.createServer(onRequest);
-	httpServer.listen(8081);
-	console.log('HTTP server listening on ' + httpServer.address().address + ':' + httpServer.address().port);
+	//function onRequest(request, response) {		
+	//	var pathname = url.parse(request.url).pathname;
+	//		route(handle, pathname, response, request, curSocket);
+	//}
 	
 	
-	tcpServer = net.createServer();
+	server = net.createServer();
 	//Pass in null for host to bind server to 0.0.0.0. Then it will accept connections directed to any IPv4 address.
-	tcpServer.listen(8088, null, function (){
-		console.log('TCP server listening on ' + tcpServer.address().address + ':' + tcpServer.address().port);
+	server.listen(8088, null, function (){
+		console.log('Server listening on ' + server.address().address + ':' + server.address().port);
 	});
 	
 	
-	tcpServer.on('connection', function(sock) {
+	server.on('connection', function(sock) {
 		//We have a connection - a socket object is assigned to the connection automatically
 		console.log('CONNECTED: ' + sock.remoteAddress + ':' + sock.remotePort);
 						
@@ -44,7 +39,8 @@ function start(route, handle) {
 			
 			//jroth
 			var newChars = cc.stripTCPDelimiter(data);
-			cc.handleChars(newChars, curSocket);
+			cc.handleChars(newChars);
+			
 			
 			//data = String(data).substring(0, data.length - 4);
 			//console.log('DATA' + sock.remoteAddress + ': ' + data);
@@ -62,12 +58,19 @@ function start(route, handle) {
 	});
 	
 	
+	//server = http.createServer(onRequest);
+	//server.listen(8080); //define port
+	//console.log("Server has started.");
+	
+	
+	/*
 	// start socket
-	io = require("socket.io").listen(httpServer);
+	io = require("socket.io").listen(server);
 
 	// on a 'connection' event
 	io.sockets.on('connection', function(socket){
 	
+		
 		curSocket = socket;
 		console.log("Connection " + socket.id + " accepted.");
 		
@@ -76,6 +79,7 @@ function start(route, handle) {
 			console.log("Connection " + socket.id + " terminated.");
 		});	    
 	});
+	*/
 	
 }
 

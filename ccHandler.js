@@ -9,7 +9,7 @@ var abrevRegExp = new RegExp(/(Mr|Mrs|Ms|Dr|Sr|U\.S|D\.C)$/i);
 
 
 //Called from outside of 
-function handleChars(newChars, socket)
+function handleChars(newChars)
 {
 	//console.log(newChars);
 	//process.stdout.write(newChars);
@@ -18,7 +18,7 @@ function handleChars(newChars, socket)
 	curWordBuffer += newChars;
 	
 	//2. find the words in the buffer
-	curWordBuffer = parseWords(curWordBuffer, socket)[0];
+	curWordBuffer = parseWords(curWordBuffer)[0];
 	//console.log(curBuffer);
 	
 	//3. add chars to current sentence
@@ -30,7 +30,7 @@ function handleChars(newChars, socket)
 }
 
 //Function takes a buffer and pulls out any words
-function parseWords(text, socket)
+function parseWords(text)
 {
 	//return elements
 	var foundWords = [];
@@ -49,7 +49,6 @@ function parseWords(text, socket)
 		{
 			foundWords.push(tokens[i]);
 			console.log("Word: " + tokens[i]);
-			broadcastString("nobody", tokens[i], socket)
 		}
 		//Otherwise this should be returned as part of the buffer
 		else returnBuf = tokens[i];
@@ -142,24 +141,6 @@ function stripTCPDelimiter(text)
 	return text;
 }
 
-// Used to broadcast to frontend for now
-function broadcastString(sp, str, socket) {
-	if (socket) {		
-		// create message to send					
-		var message = {
-		  speaker: sp,
-		  word: str
-		};
-		
-		// send message
-		console.log('BROADCASTING! '+str);
- 		socket.broadcast.emit('message',message);
-		socket.emit('message', message); //send message to sender
-	} else console.log("socket = " + socket);
-}
-
-
-
 
 //exposing this to for debugging and testing
 //TODO: make private once tested
@@ -167,4 +148,3 @@ exports.parseWords = parseWords;
 exports.stripTCPDelimiter = stripTCPDelimiter;
 
 exports.handleChars = handleChars;
-exports.broadcastString = broadcastString;

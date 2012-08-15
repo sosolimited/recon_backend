@@ -13,7 +13,7 @@ var handle = {};
 
 handle["/sosoCC/receiveCC/"] = requestHandlers.receiveCC;
 handle["/sosoCC/receiveChars/"] = requestHandlers.receiveChars;
-handle["/loadDoc"] = requestHandlers.loadDoc;
+
 
 
 //temp: disabling server as I work out text parsing
