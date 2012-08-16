@@ -1,6 +1,7 @@
 //These variables need to remain global so that we can add to the buffers periodically
 var curWordBuffer = "";
 var curSentenceBuffer = "";
+var curSpeaker = "moderator";
 
 //Regular Expressions
 var wordRegExp = new RegExp(/[\s \! \? \; \( \) \[ \] \{ \} \< \> "]|,(?=\W)|[\.\-\&](?=\W)|:(?!\d)/g);
@@ -50,6 +51,7 @@ function parseWords(text, socket)
 			foundWords.push(tokens[i]);
 			console.log("Word: " + tokens[i]);
 			var message = {
+				speaker: curSpeaker,
 				word: tokens[i]
 			};
 			broadcastString(message, socket)
