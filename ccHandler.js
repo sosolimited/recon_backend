@@ -50,11 +50,16 @@ function parseWords(text, socket)
 		{
 			foundWords.push(tokens[i]);
 			console.log("Word: " + tokens[i]);
-			var message = {
-				speaker: curSpeaker,
-				word: tokens[i]
-			};
-			broadcastString(message, socket)
+			if (tokens[i] == "MODERATOR" || tokens[i] == "QUESTION" || tokens[i] == "BROKAW") curSpeaker = "moderator";
+			else if (tokens[i] == "OBAMA") curSpeaker = "obama";
+			else if (tokens[i] == "MCCAIN") curSpeaker = "romney";
+			else { //only broadcast if not speaker name
+				var message = {
+					speaker: curSpeaker,
+					word: tokens[i]
+				};
+				broadcastString(message, socket);
+			}
 		}
 		//Otherwise this should be returned as part of the buffer
 		else returnBuf = tokens[i];
