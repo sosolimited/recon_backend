@@ -70,7 +70,7 @@ function receiveChars(response, request, socket)
 	ccHandler.handleChars(newChars);
 }
 
-function broadcastWord(sp, w, d, s) {
+/*function broadcastWord(sp, w, d, s) {
 	if (s) {	
 	
 		// set emotion value
@@ -122,7 +122,7 @@ function broadcastPhrase(sp, phrase, s) {
  		s.broadcast.emit('message',message);
 		s.emit('message', message); //send message to sender	
 	}
-}
+}*/
 
 
 /* functions for loading from static text file */
@@ -130,11 +130,11 @@ var doc;
 var ind, nextInd;
 var intervalID;
 
-function loadDoc(response, request, socket) {
+function loadDoc(docName, delay, socket) {
 
-	var url_parts = url.parse(request.url, true);
-	var delay = (url_parts.query.delay) ? url_parts.query.delay : 0;
-	var docName = url_parts.query.docName;
+	//var url_parts = url.parse(request.url, true);
+	//var delay = (url_parts.query.delay) ? url_parts.query.delay : 0;
+	//var docName = url_parts.query.docName;
 	//docName = '2008DebateTranscript_01.txt';
 	
 	console.log("d "+delay+" n "+docName);
