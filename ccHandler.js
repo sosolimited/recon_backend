@@ -49,7 +49,10 @@ function parseWords(text, socket)
 		{
 			foundWords.push(tokens[i]);
 			console.log("Word: " + tokens[i]);
-			broadcastString("nobody", tokens[i], socket)
+			var message = {
+				word: tokens[i]
+			};
+			broadcastString(message, socket)
 		}
 		//Otherwise this should be returned as part of the buffer
 		else returnBuf = tokens[i];
@@ -143,18 +146,11 @@ function stripTCPDelimiter(text)
 }
 
 // Used to broadcast to frontend for now
-function broadcastString(sp, str, socket) {
+function broadcastString(msg, socket) {
 	if (socket) {		
-		// create message to send					
-		var message = {
-		  speaker: sp,
-		  word: str
-		};
-		
 		// send message
-		console.log('BROADCASTING! '+str);
- 		socket.broadcast.emit('message',message);
-		socket.emit('message', message); //send message to sender
+ 		socket.broadcast.emit('message',msg);
+		socket.emit('message', msg); //send message to sender, which should this be
 	} else console.log("socket = " + socket);
 }
 
