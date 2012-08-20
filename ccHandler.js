@@ -50,9 +50,9 @@ function parseWords(text, socket)
 		{
 			foundWords.push(tokens[i]);
 			console.log("Word: " + tokens[i]);
-			if (tokens[i] == "MODERATOR" || tokens[i] == "QUESTION" || tokens[i] == "BROKAW") curSpeaker = "moderator";
-			else if (tokens[i] == "OBAMA") curSpeaker = "obama";
-			else if (tokens[i] == "MCCAIN") curSpeaker = "romney";
+			if (tokens[i] == "MODERATOR" || tokens[i] == "QUESTION" || tokens[i] == "BROKAW" || tokens[i] == "IFILL") curSpeaker = "moderator";
+			else if (tokens[i] == "OBAMA" || tokens[i] == "BIDEN") curSpeaker = "obama";
+			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeaker = "romney";
 			else { //only broadcast if not speaker name
 				var message = {
 					speaker: curSpeaker,
