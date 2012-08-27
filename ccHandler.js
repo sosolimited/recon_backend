@@ -1,5 +1,7 @@
 
 var common = require('./common.js');
+// Include the stanford named-entity recognition
+var namedentity = require(__dirname + "/named-entity");
 
 //These variables need to remain global so that we can add to the buffers periodically
 var curWordBuffer = "";
@@ -57,8 +59,10 @@ function parseWords(text)
 			else if (tokens[i] == "OBAMA" || tokens[i] == "BIDEN") curSpeaker = 1;
 			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeaker = 2;
 			else { //only broadcast if not speaker name
-				
-				sendWord(tokens[i], false, false, 0); //PEND updates these args to be correct
+				namedentity(tokens[i], function(resp) {
+					console.log("resp: "+resp);
+				});
+				//sendWord(tokens[i], false, false, 0); //PEND updates these args to be correct
 			}
 		}
 		//Otherwise this should be returned as part of the buffer
@@ -130,6 +134,7 @@ function parseSentence(text)
 			
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
+				sendSentence(tokens[i]);
 				sentenceStart = true;
 			}		
 			
