@@ -22,9 +22,15 @@ module.exports = function(msg, done) {
 	socket.on("error", function() {});
 	
 	socket.on("data", function(data) {
-		console.log("data:" + data);
-	// Coerce data to String, because it is a Node Buffer object.
-	//done(normalizeEnergy(data.toString()));
+		var parts = data.toString().split('/');
+		console.log("parts "+parts.length);
+		if (parts.length > 0) {
+			if (parts[1].toString().length == 1) {
+				done(parts[0].toLowerCase());
+			} else {
+				done(parts[0].charAt(0) + parts[0].slice(1).toLowerCase());
+			}
+		}
 	});
 	
  };
@@ -40,6 +46,7 @@ process.on("exit", function(code) {
 	  "edu.stanford.nlp.ie.NERServer",
 	  "-port", port,
 	  "-loadClassifier", __dirname + "/classifiers/" + classifier ]);
+});
 
 process.on("uncaughtException", function() {
   console.log('uncaughtException - exiting…');
