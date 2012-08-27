@@ -1,4 +1,6 @@
-var url = require("url");
+// relevant fxns have been moved to index.js, this file left in case other fxn code useful
+
+/*var url = require("url");
 
 var Db = require('mongodb').Db,
 	Connection = require('mongodb').Connection,
@@ -10,7 +12,7 @@ var ccHandler = require('./ccHandler.js');
 var fs = require("fs");
 
 
-client.open(function(err, p_client) {});
+client.open(function(err, p_client) {});*/
 
 
 /*function receiveCC(response, request, socket) {
@@ -62,13 +64,13 @@ client.open(function(err, p_client) {});
 
 }*/
 
-function receiveChars(response, request, socket)
+/*function receiveChars(response, request, socket)
 {
 	var url_parts = url.parse(request.url, true);
 	var newChars = url_parts.query.chars;
 	
 	ccHandler.handleChars(newChars);
-}
+}*/
 
 /*function broadcastWord(sp, w, d, s) {
 	if (s) {	
@@ -125,7 +127,7 @@ function broadcastPhrase(sp, phrase, s) {
 }*/
 
 
-/* functions for loading from static text file */
+/* functions for loading from static text file 
 var doc;
 var ind, nextInd;
 var intervalID;
@@ -168,4 +170,4 @@ function sendCharsFromDoc(socket) {
 //exports.receiveCC = receiveCC;
 exports.receiveChars = receiveChars;
 exports.loadDoc = loadDoc;
-exports.ccHandler = ccHandler;
+exports.ccHandler = ccHandler; */
