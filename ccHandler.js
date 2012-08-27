@@ -1,16 +1,19 @@
+
+var common = require('./common.js');
+
 //These variables need to remain global so that we can add to the buffers periodically
 var curWordBuffer = "";
 var curSentenceBuffer = "";
-var curSpeaker = "moderator";
+var curSpeaker = 0; //0 - moderator, 1 - obama, 2 - romney
+var sentenceStartF = false;
 
 //Regular Expressions
 var wordRegExp = new RegExp(/[\s \! \? \; \( \) \[ \] \{ \} \< \> "]|,(?=\W)|[\.\-\&](?=\W)|:(?!\d)/g);
 var sentenceRegExp = new RegExp(/[\.|\?|\!]\s/g);
 var abrevRegExp = new RegExp(/(Mr|Mrs|Ms|Dr|Sr|U\.S|D\.C)$/i);
 
-
 //Called from outside of 
-function handleChars(newChars, io)
+function handleChars(newChars)
 {
 	//console.log(newChars);
 	//process.stdout.write(newChars);
@@ -19,7 +22,7 @@ function handleChars(newChars, io)
 	curWordBuffer += newChars;
 	
 	//2. find the words in the buffer
-	curWordBuffer = parseWords(curWordBuffer, io)[0];
+	curWordBuffer = parseWords(curWordBuffer)[0];
 	//console.log(curBuffer);
 	
 	//3. add chars to current sentence
@@ -31,7 +34,7 @@ function handleChars(newChars, io)
 }
 
 //Function takes a buffer and pulls out any words
-function parseWords(text, io)
+function parseWords(text)
 {
 	//return elements
 	var foundWords = [];
@@ -50,15 +53,12 @@ function parseWords(text, io)
 		{
 			foundWords.push(tokens[i]);
 			console.log("Word: " + tokens[i]);
-			if (tokens[i] == "MODERATOR" || tokens[i] == "QUESTION" || tokens[i] == "BROKAW" || tokens[i] == "IFILL") curSpeaker = "moderator";
-			else if (tokens[i] == "OBAMA" || tokens[i] == "BIDEN") curSpeaker = "obama";
-			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeaker = "romney";
+			if (tokens[i] == "MODERATOR" || tokens[i] == "QUESTION" || tokens[i] == "BROKAW" || tokens[i] == "IFILL") curSpeaker = 0;
+			else if (tokens[i] == "OBAMA" || tokens[i] == "BIDEN") curSpeaker = 1;
+			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeaker = 2;
 			else { //only broadcast if not speaker name
-				var message = {
-					speaker: curSpeaker,
-					word: tokens[i]
-				};
-				broadcastString(message, io);
+				
+				sendWord(tokens[i], false, false, 0); //PEND updates these args to be correct
 			}
 		}
 		//Otherwise this should be returned as part of the buffer
@@ -67,6 +67,24 @@ function parseWords(text, io)
 	
 	//return both the current buffer and the found words
 	return [returnBuf, foundWords];
+}
+
+function sendWord(w, punctuationF, ngram, ngramInst)
+{
+	var message = {
+		type: "word",
+		word: w,
+		speaker: curSpeaker,
+		cats: [],
+		sentenceStartFlag: sentenceStartF,
+		punctuationFlag: punctuationF,
+		wordInstances: 0,
+		ngramID: ngram,
+		ngramInstances: ngramInst
+	};
+	common.io.sockets.emit('message', message);
+	
+	sentenceStart = false; //reset
 }
 
 
@@ -112,6 +130,7 @@ function parseSentence(text)
 			
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
+				sentenceStart = true;
 			}		
 			
 		}	
@@ -122,6 +141,16 @@ function parseSentence(text)
 	//return both the current buffer and the found words
 	return [returnBuf, foundSentences];
 }
+
+function sendSentence(s)
+{
+	var message = {
+		type: "sentenceEnd",
+		speaker: curSpeaker
+	};
+	common.io.sockets.emit('message', message);
+}
+
 
 //TODO: load a text file and generate a RegExp (or a series of them) based on the file
 function checkAbrev(token1)
@@ -152,21 +181,10 @@ function stripTCPDelimiter(text)
 	return text;
 }
 
-// Used to broadcast to frontend for now
-function broadcastString(msg, io) {
-	// send message
- 	//socket.broadcast.emit('message',msg);
-	//socket.emit('message', msg); //send message to sender, which should this be
-	io.sockets.in('').emit('message', msg);
-}
-
-
 
 
 //exposing this to for debugging and testing
 //TODO: make private once tested
 exports.parseWords = parseWords;
 exports.stripTCPDelimiter = stripTCPDelimiter;
-
 exports.handleChars = handleChars;
-exports.broadcastString = broadcastString;
