@@ -10,7 +10,7 @@ var abrevRegExp = new RegExp(/(Mr|Mrs|Ms|Dr|Sr|U\.S|D\.C)$/i);
 
 
 //Called from outside of 
-function handleChars(newChars, socket)
+function handleChars(newChars, io)
 {
 	//console.log(newChars);
 	//process.stdout.write(newChars);
@@ -19,7 +19,7 @@ function handleChars(newChars, socket)
 	curWordBuffer += newChars;
 	
 	//2. find the words in the buffer
-	curWordBuffer = parseWords(curWordBuffer, socket)[0];
+	curWordBuffer = parseWords(curWordBuffer, io)[0];
 	//console.log(curBuffer);
 	
 	//3. add chars to current sentence
@@ -31,7 +31,7 @@ function handleChars(newChars, socket)
 }
 
 //Function takes a buffer and pulls out any words
-function parseWords(text, socket)
+function parseWords(text, io)
 {
 	//return elements
 	var foundWords = [];
@@ -58,7 +58,7 @@ function parseWords(text, socket)
 					speaker: curSpeaker,
 					word: tokens[i]
 				};
-				broadcastString(message, socket);
+				broadcastString(message, io);
 			}
 		}
 		//Otherwise this should be returned as part of the buffer
@@ -153,12 +153,11 @@ function stripTCPDelimiter(text)
 }
 
 // Used to broadcast to frontend for now
-function broadcastString(msg, socket) {
-	if (socket) {		
-		// send message
- 		socket.broadcast.emit('message',msg);
-		socket.emit('message', msg); //send message to sender, which should this be
-	} else console.log("socket = " + socket);
+function broadcastString(msg, io) {
+	// send message
+ 	//socket.broadcast.emit('message',msg);
+	//socket.emit('message', msg); //send message to sender, which should this be
+	io.sockets.in('').emit('message', msg);
 }
 
 
