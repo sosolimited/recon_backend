@@ -134,7 +134,7 @@ function parseSentence(text)
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
 				sendSentence(tokens[i]);
-				sentenceStart = true;
+				sentenceStartF = true;
 			}		
 			
 		}	
