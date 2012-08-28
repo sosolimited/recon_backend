@@ -7,7 +7,7 @@ var namedentity = require(__dirname + "/named-entity");
 var curWordBuffer = "";
 var curSentenceBuffer = "";
 var curSpeaker = 0; //0 - moderator, 1 - obama, 2 - romney
-var sentenceStartF = false;
+var sentenceStartF = true;
 
 //Regular Expressions
 var wordRegExp = new RegExp(/[\s \! \? \; \( \) \[ \] \{ \} \< \> "]|,(?=\W)|[\.\-\&](?=\W)|:(?!\d)/g);
@@ -59,10 +59,9 @@ function parseWords(text)
 			else if (tokens[i] == "OBAMA" || tokens[i] == "BIDEN") curSpeaker = 1;
 			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeaker = 2;
 			else { //only broadcast if not speaker name
-				namedentity(tokens[i], function(resp) {
-					console.log("resp: "+resp);
+				namedentity(tokens[i], sentenceStartF, function(resp) {
+					sendWord(resp, false, false, 0); //PEND updates these args to be correct
 				});
-				//sendWord(tokens[i], false, false, 0); //PEND updates these args to be correct
 			}
 		}
 		//Otherwise this should be returned as part of the buffer
@@ -88,7 +87,7 @@ function sendWord(w, punctuationF, ngram, ngramInst)
 	};
 	common.io.sockets.emit('message', message);
 	
-	sentenceStart = false; //reset
+	sentenceStartF = false; //reset
 }
 
 
