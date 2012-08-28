@@ -11,7 +11,7 @@ var java = spawn("java", [ "-mx500m", "-cp",
 	"-loadClassifier", __dirname + "/classifiers/" + classifier ]);
 
 
-module.exports = function(msg, done) {
+module.exports = function(msg, start, done) {
 	console.log("msg");
 	
 	var socket = net.connect(port, function() {
@@ -23,12 +23,12 @@ module.exports = function(msg, done) {
 	
 	socket.on("data", function(data) {
 		var parts = data.toString().split('/');
-		console.log("parts "+parts.length);
+		console.log("parts "+parts.length + " "+data);
 		if (parts.length > 0) {
-			if (parts[1].toString().length == 1) {
-				done(parts[0].toLowerCase());
+			if (parts[1].toString().length != 3 || start) {
+				done(parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase());
 			} else {
-				done(parts[0].charAt(0) + parts[0].slice(1).toLowerCase());
+				done(parts[0].toLowerCase());
 			}
 		}
 	});
