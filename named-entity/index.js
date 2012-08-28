@@ -1,7 +1,7 @@
 var net = require("net");
 var spawn = require("child_process").spawn;
 var port = 3214;
-var classifier = "english.all.3class.distsim.crf.ser.gz";
+var classifier = "english.conll.4class.distsim.crf.ser.gz";//"english.all.3class.distsim.crf.ser.gz";
 
 // Spawn the sentiment strength jar application
 var java = spawn("java", [ "-mx500m", "-cp",
