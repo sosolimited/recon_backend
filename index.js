@@ -13,26 +13,30 @@ var intervalID;
 function start() {
 
 	// on a 'connection' event
-	common.io.sockets.on('connection', function(socket){
+  common.engine.on("connection", function(socket) {
 	
-		//curSocket = socket;
-		console.log("Connection " + socket.id + " accepted.");
-		
-				
-		socket.on('loadDoc', function(data){
-			console.log('loadDoc ' + data);
-			loadDoc(data['docName'], data['delay']);
-		});	
-		
-		socket.on('disconnect', function(){
-			//curSocket = null;
-			console.log("Connection " + socket.id + " terminated.");
-		});	    
-	});
+    //curSocket = socket;
+    console.log("Connection " + socket.id + " accepted.");
+    
+    socket.on("message", function(msg) {
+      msg = JSON.parse(msg);
+      console.log(msg);
+
+      switch (msg.event) {
+        case "loadDoc":
+          loadDoc(msg.data["docName"], msg.data["delay"]);
+      }
+    });
+        
+    socket.on("close", function(){
+      //curSocket = null;
+      console.log("Connection " + socket.id + " terminated.");
+    });	    
+
+  });
 	
-	
-	// create tcp server for handling cc chars stream
-	tcpServer = common.net.createServer();
+  // create tcp server for handling cc chars stream
+  tcpServer = common.net.createServer();
 	//Pass in null for host to bind server to 0.0.0.0. Then it will accept connections directed to any IPv4 address.
 	tcpServer.listen(8088, null, function (){
 		console.log('TCP server listening on ' + tcpServer.address().address + ':' + tcpServer.address().port);
@@ -68,8 +72,21 @@ function start() {
 	});
 	
 	// mongodb
-	common.mongo.open(function(err, p_client) {});
+	common.mongo.open(function(err, p_client) {
 	
+		// PEND TEMP FOR TESTING!!! clear out dbs
+		common.mongo.collection("word_instances", function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
+		common.mongo.collection("sentence_instances", function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
+		common.mongo.collection("unique_words", function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
+	});
+
+    
 }
 
 // do it

@@ -6,7 +6,8 @@ var namedentity = require(__dirname + "/named-entity");
 //These variables need to remain global so that we can add to the buffers periodically
 var curWordBuffer = "";
 var curSentenceBuffer = "";
-var curSpeaker = 0; //0 - moderator, 1 - obama, 2 - romney
+var curSpeakerID = 0; //0 - moderator, 1 - obama, 2 - romney
+var curEventID = 0;
 var sentenceStartF = true;
 
 //MongoDB stuff
@@ -58,9 +59,9 @@ function parseWords(text)
 		{
 			foundWords.push(tokens[i]);
 			console.log("Word: " + tokens[i]);
-			if (tokens[i] == "MODERATOR" || tokens[i] == "QUESTION" || tokens[i] == "BROKAW" || tokens[i] == "IFILL") curSpeaker = 0;
-			else if (tokens[i] == "OBAMA" || tokens[i] == "BIDEN") curSpeaker = 1;
-			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeaker = 2;
+			if (tokens[i] == "MODERATOR" || tokens[i] == "QUESTION" || tokens[i] == "BROKAW" || tokens[i] == "IFILL") curSpeakerID = 0;
+			else if (tokens[i] == "OBAMA" || tokens[i] == "BIDEN") curSpeakerID = 1;
+			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeakerID = 2;
 			else { //only broadcast if not speaker name
 				namedentity(tokens[i], sentenceStartF, function(resp) {
 					logWord(resp);
@@ -81,7 +82,7 @@ function logWord(w)
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var curTime = new Date().getTime();
 
-	/*common.mongo.collection('sentence_instances', function(err, collection) {
+	common.mongo.collection('sentence_instances', function(err, collection) {
 		// if new sentence, generate ID and insert into sentence_instances
 		if (curSentenceID === 0) {
 			curSentenceID = new common.mongo.bson_serializer.ObjectID();
@@ -102,11 +103,12 @@ function logWord(w)
 		}
 	});
 	
+	
 	common.mongo.collection('word_instances', function(err, collection) {
 		// insert into word_instances
 		var doc = {
 			_id: curWordID,
-			word: newWord,
+			word: w,
 			sentenceID: curSentenceID,
 			speakerID: curSpeakerID,
 			eventID: curEventID,
@@ -114,27 +116,54 @@ function logWord(w)
 		}
 		collection.insert(doc);
 		
-		console.log("w:"+newWord);
+		console.log("w:"+w);
 		
 		//updateFreq(collection, word);
 	});
 	
+	
 	common.mongo.collection('unique_words', function(err, collection) {
-
 		// upsert unique_words
+		collection.update({word: w}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
+
+		// add cats array
 		common.mongo.collection('LIWC', function(e, c) {
-			if (!e && c) {
-				c.findOne({'word':newWord.toLowerCase()}, function(err, doc) {
-					if (!err && doc) {
-						collection.update({word: newWord}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
-						collection.update({word: newWord}, {$set: {categories: doc.cat}}, {upsert:true});
-						
-						newWordEmo = 'neg';
-					}
-				});
-			}
+			c.findOne({'word':w.toLowerCase()}, function(err, doc) {
+				if (!err && doc) {
+					collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});
+				}
+			});
 		});
-	});*/
+	});
+	
+	
+	
+	common.mongo.collection('unique_words', function(err, collection) { 
+		// upsert unique_words
+		collection.update({word: w}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
+		
+		common.mongo.collection('LIWC', function(e, c) {
+			// first check if it's in LIWC (non wildcard)
+			c.findOne({'word':w.toLowerCase()}, function(err, doc) {
+				if (doc) {
+					console.log("NORMAL "+w);
+					collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});				
+				} 
+				else { // if not found, check wildcards
+					common.mongo.collection('LIWC_wildcards', function(e, c) {
+						c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
+							if (wdoc) {
+								console.log("WILDCARD " + w);
+								collection.update({word: w}, {$set: {categories: wdoc.cat}}, {upsert:true});			
+							}
+						});
+					});
+				}
+			});
+		
+		});
+	});
+
 }
 
 function sendWord(w, punctuationF, ngram, ngramInst)
@@ -142,7 +171,7 @@ function sendWord(w, punctuationF, ngram, ngramInst)
 	var message = {
 		type: "word",
 		word: w,
-		speaker: curSpeaker,
+		speaker: curSpeakerID,
 		cats: [],
 		sentenceStartFlag: sentenceStartF,
 		punctuationFlag: punctuationF,
@@ -150,7 +179,10 @@ function sendWord(w, punctuationF, ngram, ngramInst)
 		ngramID: ngram,
 		ngramInstances: ngramInst
 	};
-	common.io.sockets.emit('message', message);
+
+  Object.keys(common.engine.clients).forEach(function(key) {
+    common.engine.clients[key].send(JSON.stringify(message));
+  });
 	
 	sentenceStartF = false; //reset
 }
@@ -215,9 +247,12 @@ function sendSentence(s)
 {
 	var message = {
 		type: "sentenceEnd",
-		speaker: curSpeaker
+		speaker: curSpeakerID
 	};
-	common.io.sockets.emit('message', message);
+
+  Object.keys(common.engine.clients).forEach(function(key) {
+    common.engine.clients[key].send(JSON.stringify(message));
+  });
 }
 
 

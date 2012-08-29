@@ -12,7 +12,6 @@ var java = spawn("java", [ "-mx500m", "-cp",
 
 
 module.exports = function(msg, start, done) {
-	console.log("msg");
 	
 	var socket = net.connect(port, function() {
 		socket.write(msg + "\n");
@@ -22,9 +21,8 @@ module.exports = function(msg, start, done) {
 	socket.on("error", function() {});
 	
 	socket.on("data", function(data) {
-		console.log("data "+data);
+		//console.log("data "+data);
 		var parts = data.toString().split('/');
-		console.log("parts "+parts.length + " "+data);
 		if (parts.length > 0) {
 			if (parts[1].toString().length != 3 || start) {
 				done(parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase());
@@ -49,10 +47,11 @@ process.on("exit", function(code) {
 	  "-loadClassifier", __dirname + "/classifiers/" + classifier ]);
 });
 
-process.on("uncaughtException", function() {
-  console.log('uncaughtException - exiting…');
-  process.exit();
-});
+//process.on("uncaughtException", function() {
+//  console.error.apply(console, arguments);
+//  console.log('uncaughtException - exiting…');
+//  process.exit();
+//});
 
 process.on("disconnect", function() {
   console.log('disconnect - exiting…');
