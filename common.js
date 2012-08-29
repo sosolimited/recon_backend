@@ -8,5 +8,5 @@ module.exports = {
 	fs : require("fs"),
 	
 	mongo : new Db('test', new MongoServer("205.186.145.170", 27017, {strict:true})),
-  engine : engine.listen(8081)
+  engine : engine.listen(8081, "0.0.0.0")
 };
