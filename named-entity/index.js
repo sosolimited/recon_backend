@@ -22,13 +22,24 @@ module.exports = function(msg, start, done) {
 	
 	socket.on("data", function(data) {
 		//console.log("data "+data);
-		var parts = data.toString().split('/');
-		if (parts.length > 0) {
-			if (parts[1].toString().length != 3 || start) {
-				done(parts[0].charAt(0).toUpperCase() + parts[0].slice(1).toLowerCase());
-			} else {
-				done(parts[0].toLowerCase());
+		data = data.toString().slice(0, data.length-2);
+		
+		// first handle splits
+
+		var word = "";
+		var entity = false;
+		var words = data.split(' ');
+		for (var i=0; i<words.length; i++) {
+			var parts = words[i].split('/');
+			word += parts[0];
+			if (parts[1].length > 1 || parts[0].toLowerCase() == 'i') {
+					entity = true;
 			}
+		}
+		if (entity) {
+			done(word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
+		} else {
+			done(word.toLowerCase());
 		}
 	});
 	
