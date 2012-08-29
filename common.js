@@ -6,7 +6,7 @@ Common = {
 	net : require('net'),
 	fs : require("fs"),
 	
-	mongo : new Db('test', new MongoServer("205.186.145.170", 27017, {strict:true})),	
+	mongo : new Db('test', new MongoServer("localhost", 27017, {strict:true})),	
 	
 	io : require("socket.io").listen(8081)
 };

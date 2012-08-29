@@ -9,6 +9,9 @@ var curSentenceBuffer = "";
 var curSpeaker = 0; //0 - moderator, 1 - obama, 2 - romney
 var sentenceStartF = true;
 
+//MongoDB stuff
+var curSentenceID = 0;
+
 //Regular Expressions
 var wordRegExp = new RegExp(/[\s \! \? \; \( \) \[ \] \{ \} \< \> "]|,(?=\W)|[\.\-\&](?=\W)|:(?!\d)/g);
 var sentenceRegExp = new RegExp(/[\.|\?|\!]\s/g);
@@ -60,6 +63,7 @@ function parseWords(text)
 			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeaker = 2;
 			else { //only broadcast if not speaker name
 				namedentity(tokens[i], sentenceStartF, function(resp) {
+					logWord(resp);
 					sendWord(resp, false, false, 0); //PEND updates these args to be correct
 				});
 			}
@@ -70,6 +74,67 @@ function parseWords(text)
 	
 	//return both the current buffer and the found words
 	return [returnBuf, foundWords];
+}
+
+function logWord(w)
+{	
+	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
+	var curTime = new Date().getTime();
+
+	/*common.mongo.collection('sentence_instances', function(err, collection) {
+		// if new sentence, generate ID and insert into sentence_instances
+		if (curSentenceID === 0) {
+			curSentenceID = new common.mongo.bson_serializer.ObjectID();
+			
+			var doc = {
+				_id: curSentenceID,
+				wordInstanceIDs: [curWordID],
+				speakerID: curSpeakerID,
+				eventID: curEventID,
+				timestamp: curTime
+			}
+			
+			collection.insert(doc);
+		} 
+		// else add curWordID to wordInstanceIDs
+		else {
+			collection.update({_id: curSentenceID}, {$push: {wordInstanceIDs: curWordID}});
+		}
+	});
+	
+	common.mongo.collection('word_instances', function(err, collection) {
+		// insert into word_instances
+		var doc = {
+			_id: curWordID,
+			word: newWord,
+			sentenceID: curSentenceID,
+			speakerID: curSpeakerID,
+			eventID: curEventID,
+			timestamp: curTime
+		}
+		collection.insert(doc);
+		
+		console.log("w:"+newWord);
+		
+		//updateFreq(collection, word);
+	});
+	
+	common.mongo.collection('unique_words', function(err, collection) {
+
+		// upsert unique_words
+		common.mongo.collection('LIWC', function(e, c) {
+			if (!e && c) {
+				c.findOne({'word':newWord.toLowerCase()}, function(err, doc) {
+					if (!err && doc) {
+						collection.update({word: newWord}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
+						collection.update({word: newWord}, {$set: {categories: doc.cat}}, {upsert:true});
+						
+						newWordEmo = 'neg';
+					}
+				});
+			}
+		});
+	});*/
 }
 
 function sendWord(w, punctuationF, ngram, ngramInst)
