@@ -15,3 +15,5 @@ for now, messages received are in the form
 	speaker: "moderator"/"obama"/"romney",
 	word: "blah"
 }
+
+mongo_dumps folder contains LIWC libs, run sh mongo_dumps/loadLIWC.sh
