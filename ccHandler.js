@@ -86,8 +86,8 @@ function sendWord(w, punctuationF, ngram, ngramInst)
 		ngramInstances: ngramInst
 	};
 
-  common.engine.on("connection", function(socket) {
-    socket.send(JSON.stringify(message));
+  Object.keys(common.engine.clients).forEach(function(key) {
+    common.engine.clients[key].send(JSON.stringify(message));
   });
 	
 	sentenceStartF = false; //reset
@@ -156,8 +156,8 @@ function sendSentence(s)
 		speaker: curSpeaker
 	};
 
-  common.engine.on("connection", function(socket) {
-    socket.send(JSON.stringify(message));
+  Object.keys(common.engine.clients).forEach(function(key) {
+    common.engine.clients[key].send(JSON.stringify(message));
   });
 }
 
