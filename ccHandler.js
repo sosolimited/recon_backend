@@ -64,8 +64,7 @@ function parseWords(text)
 			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeakerID = 2;
 			else { //only broadcast if not speaker name
 				namedentity(tokens[i], sentenceStartF, function(resp) {
-					logWord(resp);
-					sendWord(resp, false, false, 0); //PEND updates these args to be correct
+					handleWord(resp, false, false, 0); //PEND updates these args to be correct
 				});
 			}
 		}
@@ -77,7 +76,7 @@ function parseWords(text)
 	return [returnBuf, foundWords];
 }
 
-function logWord(w)
+function handleWord(w, punctuationF, ngram, ngramInst)
 {	
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var curTime = new Date().getTime();
@@ -122,22 +121,6 @@ function logWord(w)
 	});
 	
 	
-	common.mongo.collection('unique_words', function(err, collection) {
-		// upsert unique_words
-		collection.update({word: w}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
-
-		// add cats array
-		common.mongo.collection('LIWC', function(e, c) {
-			c.findOne({'word':w.toLowerCase()}, function(err, doc) {
-				if (!err && doc) {
-					collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});
-				}
-			});
-		});
-	});
-	
-	
-	
 	common.mongo.collection('unique_words', function(err, collection) { 
 		// upsert unique_words
 		collection.update({word: w}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
@@ -147,15 +130,17 @@ function logWord(w)
 			c.findOne({'word':w.toLowerCase()}, function(err, doc) {
 				if (doc) {
 					console.log("NORMAL "+w);
-					collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});				
+					collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});	
+					sendWord(w, doc.cat, punctuationF, ngram, ngramInst);				
 				} 
 				else { // if not found, check wildcards
 					common.mongo.collection('LIWC_wildcards', function(e, c) {
 						c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
 							if (wdoc) {
 								console.log("WILDCARD " + w);
-								collection.update({word: w}, {$set: {categories: wdoc.cat}}, {upsert:true});			
-							}
+								collection.update({word: w}, {$set: {categories: wdoc.cat}}, {upsert:true});	
+								sendWord(w, wdoc.cat, punctuationF, ngram, ngramInst);	
+							} else sendWord(w, [], punctuationF, ngram, ngramInst);	
 						});
 					});
 				}
@@ -166,7 +151,7 @@ function logWord(w)
 
 }
 
-function sendWord(w, punctuationF, ngram, ngramInst)
+function sendWord(w, cats, punctuationF, ngram, ngramInst)
 {
 	var message = {
 		type: "word",
