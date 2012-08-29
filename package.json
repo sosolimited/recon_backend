@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "mongodb": "0.9.9-1",
-    "socket.io": "0.8.7"
+    "engine.io": "0.2.2"
   },
   "engines": {
     "node": "*"
