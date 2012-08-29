@@ -13,23 +13,27 @@ var intervalID;
 function start() {
 
 	// on a 'connection' event
-	common.io.sockets.on('connection', function(socket){
+  common.engine.on("connection", function(socket) {
 	
-		//curSocket = socket;
-		console.log("Connection " + socket.id + " accepted.");
-		
-				
-		socket.on('loadDoc', function(data){
-			console.log('loadDoc ' + data);
-			loadDoc(data['docName'], data['delay']);
-		});	
-		
-		socket.on('disconnect', function(){
-			//curSocket = null;
-			console.log("Connection " + socket.id + " terminated.");
-		});	    
-	});
-	
+    //curSocket = socket;
+    console.log("Connection " + socket.id + " accepted.");
+    
+    socket.on("message", function(msg) {
+      msg = JSON.parse(msg);
+      console.log(msg);
+
+      switch (msg.event) {
+        case "loadDoc":
+          loadDoc(msg.data["docName"], msg.data["delay"]);
+      }
+    });
+        
+    socket.on("close", function(){
+      //curSocket = null;
+      console.log("Connection " + socket.id + " terminated.");
+    });	    
+
+  });
 	
 	// create tcp server for handling cc chars stream
 	tcpServer = common.net.createServer();

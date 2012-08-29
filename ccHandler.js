@@ -85,7 +85,10 @@ function sendWord(w, punctuationF, ngram, ngramInst)
 		ngramID: ngram,
 		ngramInstances: ngramInst
 	};
-	common.io.sockets.emit('message', message);
+
+  Object.keys(common.engine.clients).forEach(function(key) {
+    common.engine.clients[key].send(JSON.stringify(message));
+  });
 	
 	sentenceStartF = false; //reset
 }
@@ -152,7 +155,10 @@ function sendSentence(s)
 		type: "sentenceEnd",
 		speaker: curSpeaker
 	};
-	common.io.sockets.emit('message', message);
+
+  Object.keys(common.engine.clients).forEach(function(key) {
+    common.engine.clients[key].send(JSON.stringify(message));
+  });
 }
 
 
