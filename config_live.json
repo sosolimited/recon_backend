@@ -1,0 +1,21 @@
+{
+  "couch": {
+    "user": "sosolimited",
+    "pass": "l0nd0neye",
+
+    "host": "cloudant.com",
+    "db": "eye_final"
+  },
+
+  "datasift": {
+    "host": "ws://websocket.datasift.com/",
+    "user": "sosolimited",
+
+    "keys": {
+      "feed": "ca3ec5be54c363e2afaf164a6dfc1105",
+      "api": "2d2c6ebd3c98dfd6ca60189249966809"
+    }
+  },
+
+  "port": 4577
+}
