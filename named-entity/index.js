@@ -48,10 +48,11 @@ process.on("exit", function(code) {
 	  "-loadClassifier", __dirname + "/classifiers/" + classifier ]);
 });
 
-process.on("uncaughtException", function() {
-  console.log('uncaughtException - exiting…');
-  process.exit();
-});
+//process.on("uncaughtException", function() {
+//  console.error.apply(console, arguments);
+//  console.log('uncaughtException - exiting…');
+//  process.exit();
+//});
 
 process.on("disconnect", function() {
   console.log('disconnect - exiting…');
