@@ -84,6 +84,16 @@ function start() {
 		common.mongo.collection("unique_words", function(err, collection) {
 			collection.remove(function(err, result) {});
 		});
+		
+		common.mongo.collection("unique_2grams", function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
+		common.mongo.collection("unique_3grams", function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
+		common.mongo.collection("unique_4grams", function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
 	});
 
     
