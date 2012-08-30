@@ -123,50 +123,58 @@ function handleWord(w, punctuationF, ngram, ngramInst)
 	
 	common.mongo.collection('unique_words', function(err, collection) { 
 		// upsert unique_words
-		collection.update({word: w}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
-		
-		common.mongo.collection('LIWC', function(e, c) {
-			// first check if it's in LIWC (non wildcard)
-			c.findOne({'word':w.toLowerCase()}, function(err, doc) {
-				if (doc) {
-					console.log("NORMAL "+w);
-					collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});	
-					sendWord(w, doc.cat, punctuationF, ngram, ngramInst);				
-				} 
-				else { // if not found, check wildcards
-					common.mongo.collection('LIWC_wildcards', function(e, c) {
-						c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
-							if (wdoc) {
-								console.log("WILDCARD " + w);
-								collection.update({word: w}, {$set: {categories: wdoc.cat}}, {upsert:true});	
-								sendWord(w, wdoc.cat, punctuationF, ngram, ngramInst);	
-							} else sendWord(w, [], punctuationF, ngram, ngramInst);	
-						});
+		//collection.update({word: w}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
+		collection.findAndModify(
+			{word: w}, 
+			[['_id','asc']], 
+			{$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, 
+			{upsert:true, new:true},
+			function(err, object) {
+			
+				common.mongo.collection('LIWC', function(e, c) {
+					// first check if it's in LIWC (non wildcard)
+					c.findOne({'word':w.toLowerCase()}, function(err, doc) {
+						var cats = [];
+						if (doc) {
+							collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});	
+							console.log("NORMAL "+w+" "+doc.cat);
+							cats = doc.cat;			
+						} 
+						else { // if not found, check wildcards
+							common.mongo.collection('LIWC_wildcards', function(e, c) {
+								c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
+									if (wdoc) {
+										console.log("WILDCARD " + w);
+										collection.update({word: w}, {$set: {categories: wdoc.cat}}, {upsert:true});	
+										cats = wdoc.cat;
+									}
+								});
+							});
+						}	
+						sendWord(w, cats, punctuationF, object.wordInstanceIDs.length, ngram, ngramInst);	
 					});
-				}
+				});
 			});
-		
-		});
 	});
-
 }
 
-function sendWord(w, cats, punctuationF, ngram, ngramInst)
+function sendWord(w, wcats, punctuationF, numInstances, ngram, ngramInst)
 {
 	var message = {
 		type: "word",
 		word: w,
 		speaker: curSpeakerID,
-		cats: [],
+		cats: wcats,
 		sentenceStartFlag: sentenceStartF,
 		punctuationFlag: punctuationF,
-		wordInstances: 0,
+		wordInstances: numInstances,
 		ngramID: ngram,
 		ngramInstances: ngramInst
 	};
 
   Object.keys(common.engine.clients).forEach(function(key) {
     common.engine.clients[key].send(JSON.stringify(message));
+    console.log(message);
   });
 	
 	sentenceStartF = false; //reset
