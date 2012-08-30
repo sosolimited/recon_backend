@@ -9,9 +9,10 @@ var curSentenceBuffer = "";
 var curSpeakerID = 0; //0 - moderator, 1 - obama, 2 - romney
 var curEventID = 0;
 var sentenceStartF = true;
-var cur2Gram;
-var cur3Gram;
-var cur4Gram;
+var cur2Gram = [];
+var cur3Gram = [];
+var cur4Gram = [];
+var minNGramOccurrences = 4;
 
 //MongoDB stuff
 var curSentenceID = 0;
@@ -139,6 +140,8 @@ function handleWord(w, ngram, ngramInst, func)
 				common.mongo.collection('LIWC', function(e, c) {
 					// first check if it's in LIWC (non wildcard)
 					c.findOne({'word':w.toLowerCase()}, function(err, doc) {
+					
+						// add categories
 						var cats = [];
 						if (doc) {
 							collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});	
@@ -155,35 +158,135 @@ function handleWord(w, ngram, ngramInst, func)
 									}
 								});
 							});
-						}	
-						sendWord(w, false, cats, object.wordInstanceIDs.length, ngram, ngramInst);	
-						func();
+						}
+						
+						
+						// process ngrams and send
+						processNGrams(w, curWordID, curSentenceID, function (ngrams) {
+							sendWord(w, false, cats, object.wordInstanceIDs.length, ngrams);	
+							func();
+						});
 					});
 				});
 			});
 	});
 }
 
-function sendWord(w, punctuationF, wcats, numInstances, ngram, ngramInst)
+function processNGrams(w, wID, sID, func) {
+	var ngrams = [];
+
+	// check for 2grams
+	if (cur2Gram.length == 2) {
+		cur2Gram.shift();
+		cur2Gram.push(w);
+		common.mongo.collection('unique_2grams', function(e2, c2) {
+			c2.findAndModify(
+				{ngram: cur2Gram},
+				[['_id','asc']], 
+				{$push: {wordInstanceIDs: wID, sentenceInstanceIDs: sID}}, 
+				{upsert:true, new:true},
+				function(err2, object2) {
+					if(object2.wordInstanceIDs.length == minNGramOccurrences) {
+						sendNewNGram(object2._id, cur2Gram, object2.wordInstanceIDs);
+					}
+					if(object2.wordInstanceIDs.length >= minNGramOccurrences) {
+						ngrams.push([object2._id, object2.wordInstanceIDs.length]);
+					}
+					
+					// check for 3grams
+					if (cur3Gram.length == 3) {
+						cur3Gram.shift();
+						cur3Gram.push(w);
+						common.mongo.collection('unique_3grams', function(e3, c3) {
+							c3.findAndModify(
+								{ngram: cur3Gram},
+								[['_id','asc']], 
+								{$push: {wordInstanceIDs: wID, sentenceInstanceIDs: sID}}, 
+								{upsert:true, new:true},
+								function(err3, object3) {
+									if(object3.wordInstanceIDs.length == minNGramOccurrences) {
+										sendNewNGram(object3._id, cur3Gram, object3.wordInstanceIDs);
+									}
+									if(object3.wordInstanceIDs.length >= minNGramOccurrences) {
+										ngrams.push([object3._id, object3.wordInstanceIDs.length]);
+									}
+									
+									if (cur4Gram.length == 4) {
+										cur4Gram.shift();
+										cur4Gram.push(w);
+										common.mongo.collection('unique_4grams', function(e4, c4) {
+											c4.findAndModify(
+												{ngram: cur4Gram},
+												[['_id','asc']], 
+												{$push: {wordInstanceIDs: wID, sentenceInstanceIDs: sID}}, 
+												{upsert:true, new:true},
+												function(err4, object4) {
+													if(object4.wordInstanceIDs.length == minNGramOccurrences) {
+														sendNewNGram(object4._id, cur4Gram, object4.wordInstanceIDs);
+													}
+													if(object4.wordInstanceIDs.length >= minNGramOccurrences) {
+														ngrams.push([object4._id, object4.wordInstanceIDs.length]);
+													}
+												});
+										});
+									} else {
+										cur4Gram.push(w);
+									}							
+									
+									func(ngrams);
+								});
+						});
+					} else {
+						cur3Gram.push(w);
+						func(ngrams);
+					}									
+				}
+			);
+		});
+	} else {
+		cur2Gram.push(w);
+		func(ngrams);
+	}
+
+}
+
+function sendNewNGram(nid, n, nInstances) {
+	var message = {
+		type: "newNGram",
+		ID: nid,
+		ngram: n, 
+		instances: nInstances
+	};
+	
+	Object.keys(common.engine.clients).forEach(function(key) {
+    common.engine.clients[key].send(JSON.stringify(message));
+    console.log(message);
+  });
+	
+}
+
+function sendWord(w, punctuationF, wcats, numInstances, ngramsArr)
 {
 	var message = {
 		type: "word",
 		word: w,
 		speaker: curSpeakerID,
-		cats: wcats,
-		sentenceStartFlag: sentenceStartF,
-		punctuationFlag: punctuationF,
-		wordInstances: numInstances,
-		ngramID: ngram,
-		ngramInstances: ngramInst
+		punctuationFlag: punctuationF
 	};
+	
+	if (!punctuationF) {
+		message['sentenceStartFlag'] = sentenceStartF;
+		message['cats'] = wcats;
+		message['wordInstances'] = numInstances;
+		message['ngrams'] = ngramsArr;
+		sentenceStartF = false; //reset
+	}
 
   Object.keys(common.engine.clients).forEach(function(key) {
     common.engine.clients[key].send(JSON.stringify(message));
     console.log(message);
   });
 	
-	sentenceStartF = false; //reset
 }
 
 
@@ -228,12 +331,17 @@ function parseSentence(text)
 				tokens[i] += punct;
 				
 				// send punctuation
-				sendWord(punct, []);
+				sendWord(punct, true);
 			
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
 				sendSentence(tokens[i]);
 				sentenceStartF = true;
+				
+				// reset ngrams at start of sentence
+				cur2Gram = [];
+				cur3Gram = [];
+				cur4Gram = [];
 			}		
 			
 		}	
