@@ -9,6 +9,9 @@ var curSentenceBuffer = "";
 var curSpeakerID = 0; //0 - moderator, 1 - obama, 2 - romney
 var curEventID = 0;
 var sentenceStartF = true;
+var cur2Gram;
+var cur3Gram;
+var cur4Gram;
 
 //MongoDB stuff
 var curSentenceID = 0;
@@ -26,21 +29,23 @@ function handleChars(newChars)
 
 	//1. add chars to current word
 	curWordBuffer += newChars;
-	
-	//2. find the words in the buffer
-	curWordBuffer = parseWords(curWordBuffer)[0];
-	//console.log(curBuffer);
-	
-	//3. add chars to current sentence
+
+	//2. add chars to current sentence
 	curSentenceBuffer += newChars;
 	
-	//4. find sentences
-	curSentenceBuffer = parseSentence(curSentenceBuffer)[0];
+	//3. find the words in the buffer
+	curWordBuffer = parseWords(curWordBuffer, function() {
+		
+		//4. find sentences
+		curSentenceBuffer = parseSentence(curSentenceBuffer)[0];
 
+	})[0];
+	//console.log(curBuffer);
+	
 }
 
 //Function takes a buffer and pulls out any words
-function parseWords(text)
+function parseWords(text, func)
 {
 	//return elements
 	var foundWords = [];
@@ -64,7 +69,7 @@ function parseWords(text)
 			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeakerID = 2;
 			else { //only broadcast if not speaker name
 				namedentity(tokens[i], sentenceStartF, function(resp) {
-					handleWord(resp, false, false, 0); //PEND updates these args to be correct
+					handleWord(resp, false, 0, func); //PEND updates these args to be correct
 				});
 			}
 		}
@@ -76,7 +81,7 @@ function parseWords(text)
 	return [returnBuf, foundWords];
 }
 
-function handleWord(w, punctuationF, ngram, ngramInst)
+function handleWord(w, ngram, ngramInst, func)
 {	
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var curTime = new Date().getTime();
@@ -137,28 +142,29 @@ function handleWord(w, punctuationF, ngram, ngramInst)
 						var cats = [];
 						if (doc) {
 							collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});	
-							console.log("NORMAL "+w+" "+doc.cat);
+							//console.log("NORMAL "+w);
 							cats = doc.cat;			
 						} 
 						else { // if not found, check wildcards
 							common.mongo.collection('LIWC_wildcards', function(e, c) {
 								c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
 									if (wdoc) {
-										console.log("WILDCARD " + w);
+										//console.log("WILDCARD " + w);
 										collection.update({word: w}, {$set: {categories: wdoc.cat}}, {upsert:true});	
 										cats = wdoc.cat;
 									}
 								});
 							});
 						}	
-						sendWord(w, cats, punctuationF, object.wordInstanceIDs.length, ngram, ngramInst);	
+						sendWord(w, false, cats, object.wordInstanceIDs.length, ngram, ngramInst);	
+						func();
 					});
 				});
 			});
 	});
 }
 
-function sendWord(w, wcats, punctuationF, numInstances, ngram, ngramInst)
+function sendWord(w, punctuationF, wcats, numInstances, ngram, ngramInst)
 {
 	var message = {
 		type: "word",
@@ -220,6 +226,9 @@ function parseSentence(text)
 				//console.log("Index: "+ index + " >> Punctuation: "+ punct);
 			
 				tokens[i] += punct;
+				
+				// send punctuation
+				sendWord(punct, []);
 			
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
