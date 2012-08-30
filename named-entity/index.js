@@ -32,7 +32,7 @@ module.exports = function(msg, start, done) {
 		for (var i=0; i<words.length; i++) {
 			var parts = words[i].split('/');
 			word += parts[0];
-			if (parts[1].length > 1 || parts[0].toLowerCase() == 'i') {
+			if (parts[1].length > 1 || parts[0].toLowerCase() == 'i' || start) {
 					entity = true;
 			}
 		}
