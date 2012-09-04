@@ -24,7 +24,7 @@ function start() {
 
       switch (msg.event) {
         case "loadDoc":
-          loadDoc(msg.data["docName"], msg.data["delay"]);
+        	loadDoc(msg.data["docName"], msg.data["delay"]);
       }
     });
         
@@ -50,6 +50,9 @@ function start() {
 		sock.on('data', function(data){
 			
 			data = String(data);
+			
+			console.log("data: "+data);
+			
 			//process.stdout.write(cc.stripTCPDelimiter(data));
 			
 			//jroth
