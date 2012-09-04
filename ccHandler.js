@@ -146,7 +146,7 @@ function handleWord(w, ngram, ngramInst, func)
 						if (doc) {
 							collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});	
 							//console.log("NORMAL "+w);
-							cats = doc.cat;			
+							cats = doc.cat;		
 						} 
 						else { // if not found, check wildcards
 							common.mongo.collection('LIWC_wildcards', function(e, c) {
@@ -163,7 +163,7 @@ function handleWord(w, ngram, ngramInst, func)
 						
 						// process ngrams and send
 						processNGrams(w, curWordID, curSentenceID, function (ngrams) {
-							sendWord(w, false, cats, object.wordInstanceIDs.length, ngrams);	
+							sendWord(object._id, w, false, cats, object.wordInstanceIDs.length, ngrams);	
 							func();
 						});
 					});
@@ -265,10 +265,11 @@ function sendNewNGram(nid, n, nInstances) {
 	
 }
 
-function sendWord(w, punctuationF, wcats, numInstances, ngramsArr)
+function sendWord(wid, w, punctuationF, wcats, numInstances, ngramsArr)
 {
 	var message = {
 		type: "word",
+		id: wid,
 		word: w,
 		speaker: curSpeakerID,
 		punctuationFlag: punctuationF
@@ -331,7 +332,7 @@ function parseSentence(text)
 				tokens[i] += punct;
 				
 				// send punctuation
-				sendWord(punct, true);
+				sendWord(0, punct, true);
 			
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
