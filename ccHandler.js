@@ -162,8 +162,8 @@ function handleWord(w, ngram, ngramInst, func)
 						
 						
 						// process ngrams and send
-						processNGrams(w, curWordID, curSentenceID, function (ngrams) {
-							sendWord(object._id, w, false, cats, object.wordInstanceIDs.length, ngrams);	
+						processNGrams(curTime, w, curWordID, curSentenceID, function (ngrams) {
+							sendWord(curTime, object._id, w, false, cats, object.wordInstanceIDs.length, ngrams);	
 							func();
 						});
 					});
@@ -172,7 +172,7 @@ function handleWord(w, ngram, ngramInst, func)
 	});
 }
 
-function processNGrams(w, wID, sID, func) {
+function processNGrams(t, w, wID, sID, func) {
 	var ngrams = [];
 
 	// check for 2grams
@@ -187,7 +187,7 @@ function processNGrams(w, wID, sID, func) {
 				{upsert:true, new:true},
 				function(err2, object2) {
 					if(object2.wordInstanceIDs.length == minNGramOccurrences) {
-						sendNewNGram(object2._id, cur2Gram, object2.wordInstanceIDs);
+						sendNewNGram(t, object2._id, cur2Gram, object2.wordInstanceIDs);
 					}
 					if(object2.wordInstanceIDs.length >= minNGramOccurrences) {
 						ngrams.push([object2._id, object2.wordInstanceIDs.length]);
@@ -205,7 +205,7 @@ function processNGrams(w, wID, sID, func) {
 								{upsert:true, new:true},
 								function(err3, object3) {
 									if(object3.wordInstanceIDs.length == minNGramOccurrences) {
-										sendNewNGram(object3._id, cur3Gram, object3.wordInstanceIDs);
+										sendNewNGram(t, object3._id, cur3Gram, object3.wordInstanceIDs);
 									}
 									if(object3.wordInstanceIDs.length >= minNGramOccurrences) {
 										ngrams.push([object3._id, object3.wordInstanceIDs.length]);
@@ -222,7 +222,7 @@ function processNGrams(w, wID, sID, func) {
 												{upsert:true, new:true},
 												function(err4, object4) {
 													if(object4.wordInstanceIDs.length == minNGramOccurrences) {
-														sendNewNGram(object4._id, cur4Gram, object4.wordInstanceIDs);
+														sendNewNGram(t, object4._id, cur4Gram, object4.wordInstanceIDs);
 													}
 													if(object4.wordInstanceIDs.length >= minNGramOccurrences) {
 														ngrams.push([object4._id, object4.wordInstanceIDs.length]);
@@ -250,9 +250,10 @@ function processNGrams(w, wID, sID, func) {
 
 }
 
-function sendNewNGram(nid, n, nInstances) {
+function sendNewNGram(t, nid, n, nInstances) {
 	var message = {
 		type: "newNGram",
+		timestamp: t,
 		ID: nid,
 		ngram: n, 
 		instances: nInstances
@@ -265,10 +266,11 @@ function sendNewNGram(nid, n, nInstances) {
 	
 }
 
-function sendWord(wid, w, punctuationF, wcats, numInstances, ngramsArr)
+function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 {
 	var message = {
 		type: "word",
+		timestamp: t,
 		id: wid,
 		word: w,
 		speaker: curSpeakerID,
@@ -295,6 +297,8 @@ function sendWord(wid, w, punctuationF, wcats, numInstances, ngramsArr)
 
 function parseSentence(text)
 {
+	var time = new Date().getTime();
+
 	//return elements
 	var foundSentences = [];
 	var returnBuf = "";
@@ -331,12 +335,12 @@ function parseSentence(text)
 			
 				tokens[i] += punct;
 				
-				// send punctuation
-				sendWord(0, punct, true);
+				// send punctuation //PEND async problems
+				sendWord(time, 0, punct, true);
 			
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
-				sendSentence(tokens[i]);
+				sendSentenceEnd(time);
 				sentenceStartF = true;
 				
 				// reset ngrams at start of sentence
@@ -354,10 +358,11 @@ function parseSentence(text)
 	return [returnBuf, foundSentences];
 }
 
-function sendSentence(s)
+function sendSentenceEnd(t)
 {
 	var message = {
 		type: "sentenceEnd",
+		timestamp: t,
 		speaker: curSpeakerID
 	};
 
