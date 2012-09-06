@@ -25,6 +25,8 @@ function start() {
       switch (msg.event) {
         case "loadDoc":
         	loadDoc(msg.data["docName"], msg.data["delay"]);
+        case "loadHistory":
+        	loadHistory();
       }
     });
         
@@ -124,6 +126,20 @@ function loadDoc(docName, delay) {
 	} catch (e) {
 		console.log(e);
 	}		
+}
+
+function loadHistory() {
+		common.mongo.collection('messages', function(err, collection) {
+		collection.find(function(err, cursor) {
+			cursor.each(function(err, msg) { 
+				console.log("SEND "+msg);
+				// PEND only send to client requesting!
+				Object.keys(common.engine.clients).forEach(function(key) {
+			    common.engine.clients[key].send(JSON.stringify(msg));
+			  });
+			});
+		});
+	});	
 }
 
 function sendCharsFromDoc() {

@@ -258,12 +258,7 @@ function sendNewNGram(t, nid, n, nInstances) {
 		ngram: n, 
 		instances: nInstances
 	};
-	
-	Object.keys(common.engine.clients).forEach(function(key) {
-    common.engine.clients[key].send(JSON.stringify(message));
-    console.log(message);
-  });
-	
+  sendMessage(message);
 }
 
 function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
@@ -285,11 +280,7 @@ function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 		sentenceStartF = false; //reset
 	}
 
-  Object.keys(common.engine.clients).forEach(function(key) {
-    common.engine.clients[key].send(JSON.stringify(message));
-    console.log(message);
-  });
-	
+  sendMessage(message);
 }
 
 
@@ -365,12 +356,21 @@ function sendSentenceEnd(t)
 		timestamp: t,
 		speaker: curSpeakerID
 	};
-
-  Object.keys(common.engine.clients).forEach(function(key) {
-    common.engine.clients[key].send(JSON.stringify(message));
-  });
+	sendMessage(message);
 }
 
+function sendMessage(msg) {
+	// send msg
+  Object.keys(common.engine.clients).forEach(function(key) {
+    common.engine.clients[key].send(JSON.stringify(msg));
+  });
+  
+  // log msg
+  common.mongo.collection('messages', function(err, collection) {
+		collection.insert(msg);
+	});
+	
+}
 
 //TODO: load a text file and generate a RegExp (or a series of them) based on the file
 function checkAbrev(token1)
