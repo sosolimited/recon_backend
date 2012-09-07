@@ -1,9 +1,0 @@
-{
-  "mongo": {
-    "user": "",
-    "pass": "",
-
-    "host": "localhost",
-    "db": "recon"
-  }
-}
