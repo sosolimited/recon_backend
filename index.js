@@ -25,8 +25,10 @@ function start() {
       switch (msg.event) {
         case "loadDoc":
         	loadDoc(msg.data["docName"], msg.data["delay"]);
+        	break;
         case "loadHistory":
         	loadHistory();
+        	break;
       }
     });
         
@@ -116,7 +118,7 @@ function loadDoc(docName, delay) {
 		doc = common.fs.readFileSync(__dirname + '/documents/' + docName, 'utf8');
 		
 		if (delay == 0)
-			ccHandler.handleChars(doc);
+			cc.handleChars(doc);
 		else {
 			ind = 0;
 			nextInd = 0;
