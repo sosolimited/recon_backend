@@ -117,9 +117,10 @@ function loadDoc(docName, delay) {
 	try {
 		doc = common.fs.readFileSync(__dirname + '/documents/' + docName, 'utf8');
 		
-		if (delay == 0)
+		if (delay == 0) {
 			cc.handleChars(doc);
-		else {
+			cc.sendEndMessage();
+		} else {
 			ind = 0;
 			nextInd = 0;
 			clearTimeout(intervalID);
@@ -151,7 +152,10 @@ function sendCharsFromDoc() {
 		cc.handleChars(doc.substring(ind, nextInd));
 		ind = nextInd;
 	}
-	else clearTimeout(intervalID);
+	else {
+		clearTimeout(intervalID);
+		cc.sendEndMessage();
+	}
 	
 }
 

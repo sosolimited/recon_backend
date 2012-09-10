@@ -359,6 +359,14 @@ function sendSentenceEnd(t)
 	sendMessage(message);
 }
 
+function sendEndMessage() {
+	var message = {
+		type: "transcriptDone",
+		timestamp: new Date().getTime()
+	};
+	sendMessage(message);
+}
+
 function sendMessage(msg) {
 	// send msg
   Object.keys(common.engine.clients).forEach(function(key) {
@@ -371,6 +379,7 @@ function sendMessage(msg) {
 	});
 	
 }
+
 
 //TODO: load a text file and generate a RegExp (or a series of them) based on the file
 function checkAbrev(token1)
@@ -408,3 +417,4 @@ function stripTCPDelimiter(text)
 exports.parseWords = parseWords;
 exports.stripTCPDelimiter = stripTCPDelimiter;
 exports.handleChars = handleChars;
+exports.sendEndMessage = sendEndMessage;
