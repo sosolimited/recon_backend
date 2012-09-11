@@ -2,6 +2,8 @@
 var common = require('./common.js');
 // Include the stanford named-entity recognition
 var namedentity = require(__dirname + "/named-entity");
+// Include sentistrength
+var sentistrength = require(__dirname + "/sentistrength");
 
 //These variables need to remain global so that we can add to the buffers periodically
 var curWordBuffer = "";
@@ -331,7 +333,11 @@ function parseSentence(text)
 			
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
-				sendSentenceEnd(time);
+				
+				// analyze sentiment
+	      sentistrength(tokens[i], function(sentiment) {
+					sendSentenceEnd(time, sentiment);
+				});
 				sentenceStartF = true;
 				
 				// reset ngrams at start of sentence
@@ -349,12 +355,13 @@ function parseSentence(text)
 	return [returnBuf, foundSentences];
 }
 
-function sendSentenceEnd(t)
+function sendSentenceEnd(t, senti)
 {
 	var message = {
 		type: "sentenceEnd",
 		timestamp: t,
-		speaker: curSpeakerID
+		speaker: curSpeakerID,
+		sentiment: senti
 	};
 	sendMessage(message);
 }
