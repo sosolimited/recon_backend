@@ -9,11 +9,7 @@ use args docName and delay to simluate streaming, place documents in the /docume
 
 use no args if you want live cc streaming from OF app
 
-for now, messages received are in the form
+see Reconstitution 12 | Data and Stats doc for message specs
 
-{
-	speaker: "moderator"/"obama"/"romney",
-	word: "blah"
-}
 
 mongo_dumps folder contains LIWC libs, run sh mongo_dumps/loadLIWC.sh
