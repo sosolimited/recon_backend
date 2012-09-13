@@ -256,7 +256,7 @@ function sendNewNGram(t, nid, n, nInstances) {
 	var message = {
 		type: "newNGram",
 		timeDiff: t,
-		ID: nid,
+		dbid: nid,
 		ngram: n, 
 		instances: nInstances
 	};
@@ -268,7 +268,7 @@ function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 	var message = {
 		type: "word",
 		timeDiff: t,
-		id: wid,
+		dbid: wid,
 		word: w,
 		speaker: curSpeakerID,
 		punctuationFlag: punctuationF
