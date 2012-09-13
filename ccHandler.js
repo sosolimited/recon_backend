@@ -99,7 +99,7 @@ function handleWord(w, ngram, ngramInst, func)
 				wordInstanceIDs: [curWordID],
 				speakerID: curSpeakerID,
 				eventID: curEventID,
-				timestamp: curTime
+				timeDiff: curTime - common.startTime
 			}
 			
 			collection.insert(doc);
@@ -119,7 +119,7 @@ function handleWord(w, ngram, ngramInst, func)
 			sentenceID: curSentenceID,
 			speakerID: curSpeakerID,
 			eventID: curEventID,
-			timestamp: curTime
+			timeDiff: curTime - common.startTime
 		}
 		collection.insert(doc);
 		
@@ -164,8 +164,8 @@ function handleWord(w, ngram, ngramInst, func)
 						
 						
 						// process ngrams and send
-						processNGrams(curTime, w, curWordID, curSentenceID, function (ngrams) {
-							sendWord(curTime, object._id, w, false, cats, object.wordInstanceIDs.length, ngrams);	
+						processNGrams(curTime - common.startTime, w, curWordID, curSentenceID, function (ngrams) {
+							sendWord(curTime - common.startTime, object._id, w, false, cats, object.wordInstanceIDs.length, ngrams);	
 							func();
 						});
 					});
@@ -255,7 +255,7 @@ function processNGrams(t, w, wID, sID, func) {
 function sendNewNGram(t, nid, n, nInstances) {
 	var message = {
 		type: "newNGram",
-		timestamp: t,
+		timeDiff: t,
 		ID: nid,
 		ngram: n, 
 		instances: nInstances
@@ -267,7 +267,7 @@ function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 {
 	var message = {
 		type: "word",
-		timestamp: t,
+		timeDiff: t,
 		id: wid,
 		word: w,
 		speaker: curSpeakerID,
@@ -290,7 +290,7 @@ function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 
 function parseSentence(text)
 {
-	var time = new Date().getTime();
+	var time = (new Date().getTime()) - common.startTime;
 
 	//return elements
 	var foundSentences = [];
@@ -359,7 +359,7 @@ function sendSentenceEnd(t, senti)
 {
 	var message = {
 		type: "sentenceEnd",
-		timestamp: t,
+		timeDiff: t,
 		speaker: curSpeakerID,
 		sentiment: senti
 	};
@@ -369,7 +369,7 @@ function sendSentenceEnd(t, senti)
 function sendEndMessage() {
 	var message = {
 		type: "transcriptDone",
-		timestamp: new Date().getTime()
+		timeDiff: (new Date().getTime()) - common.startTime
 	};
 	sendMessage(message);
 }

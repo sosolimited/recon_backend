@@ -81,7 +81,9 @@ function start() {
 	// mongodb
 	common.mongo.open(function(err, p_client) {
 	
-		// PEND TEMP FOR TESTING!!! clear out dbs
+		////  PEND TEMP FOR TESTING!!! initialize for testing
+	
+		// clear out dbs
 		common.mongo.collection("word_instances", function(err, collection) {
 			collection.remove(function(err, result) {});
 		});
@@ -101,6 +103,10 @@ function start() {
 		common.mongo.collection("unique_4grams", function(err, collection) {
 			collection.remove(function(err, result) {});
 		});
+		
+		// reset start date
+		common.startTime = new Date().getTime();
+		
 	});
 
     
