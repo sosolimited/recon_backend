@@ -9,7 +9,8 @@ module.exports = {
 	url : require("url"),
 	net : require('net'),
 	fs : require("fs"),	
-
+	startTime : new Date(2012, 9, 3, 21), //defaults to first debate right now, update this!
+	
 	mongo : new Db(config.mongo.db, new MongoServer(config.mongo.host, 27017, {strict:true})),
  	engine : engine.listen(8081, "0.0.0.0")
 };
