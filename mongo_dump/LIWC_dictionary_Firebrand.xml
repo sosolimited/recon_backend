@@ -32897,4 +32897,20 @@
       <Word>space</Word>
     </Keyword>
   </Topic>
+  
+   <Topic>
+    <Title>say</Title>
+    <Keyword>
+      <Word>say</Word>
+    </Keyword>
+    <Keyword>
+      <Word>saying</Word>
+    </Keyword>
+    <Keyword>
+      <Word>says</Word>
+    </Keyword>
+    <Keyword>
+      <Word>said</Word>
+    </Keyword>
+  </Topic>
 </Collection>
