@@ -1,7 +1,7 @@
 
 var net = require("net");
 var spawn = require("child_process").spawn;
-var port = 3213;
+var port = 3214;
 
 var regex1 = new RegExp(/\w*\[-?\d\]/g);
 var regex2 = new RegExp(/\w*/);
@@ -14,6 +14,8 @@ var regex5 = new RegExp(/\S{2,}/); //finds the emoticon and the space, once rege
 
 
 function normalizeEnergy(data) {
+	console.log("data "+data);
+
 	// Contains the positive and negative energy amounts
 	var returnvals = [];
 	var energy = data.trim().split(" ");
@@ -38,7 +40,7 @@ function normalizeEnergy(data) {
 
 function parseEnergyWords(s) {
 	
-var energy = []; //return array
+	var energy = []; //return array
 
 	var pairs = s.match(regex1);
 	
@@ -76,8 +78,8 @@ var energy = []; //return array
 
 // Spawn the sentiment strength jar application
 var java = spawn("java", [ "-jar",
-  __dirname + "/senti-strength.jar", "explain", "sentidata", //Jro added explain
-  __dirname + "/data/", "listen", port ]);
+  __dirname + "/resources/senti-strength.jar", "explain", "sentidata", //Jro added explain
+  __dirname + "/resources/data/", "listen", port ]);
 
 module.exports = function(msg, done) {
   var socket = net.connect(port, function() {
@@ -102,16 +104,15 @@ process.on("exit", function(code) {
   
   //spawn a new one
   java = spawn("java", [ "-jar",
-  __dirname + "/senti-strength.jar", "explain", "sentidata", //Jro added explain
-  __dirname + "/data/", "listen", port ]);
+  __dirname + "/resources/senti-strength.jar", "explain", "sentidata", //Jro added explain
+  __dirname + "/resources/data/", "listen", port ]);
 });
 
-/*
-process.on("uncaughtException", function() {
-  console.log('uncaughtException - exiting…');
+
+process.on("uncaughtException", function(ex) {
+  console.log('uncaughtException - exiting…'+ex);
   process.exit();
 });
-*/
 
 process.on("disconnect", function() {
   console.log('disconnect - exiting…');

@@ -363,9 +363,11 @@ function parseSentence(text)
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
 				
+				var str = tokens[i];
+				
 				// analyze sentiment
 	      sentistrength(tokens[i], function(sentiment) {
-					sendSentenceEnd(time, sentiment);
+					sendSentenceEnd(time, sentiment, str.split(" ").length-1);
 				});
 				sentenceStartF = true;
 				
@@ -384,14 +386,17 @@ function parseSentence(text)
 	return [returnBuf, foundSentences];
 }
 
-function sendSentenceEnd(t, senti)
+function sendSentenceEnd(t, senti, l)
 {
+console.log("SENTENCE END!!");
 	var message = {
 		type: "sentenceEnd",
 		timeDiff: t,
 		speaker: curSpeakerID,
-		sentiment: senti
+		sentiment: senti,
+		length: l
 	};
+  console.log(message);
 	sendMessage(message);
 }
 
@@ -409,7 +414,7 @@ function sendMessage(msg) {
     common.engine.clients[key].send(JSON.stringify(msg));
   });
   
-  console.log(msg);
+  //console.log(msg);
   
   // log msg
   common.mongo.collection('messages', function(err, collection) {

@@ -1,6 +1,6 @@
 var net = require("net");
 var spawn = require("child_process").spawn;
-var port = 3214;
+var port = 3213;
 var classifier = "english.all.3class.distsim.crf.ser.gz";
 
 // Spawn the sentiment strength jar application
@@ -21,7 +21,7 @@ module.exports = function(msg, start, done) {
 	socket.on("error", function() {});
 	
 	socket.on("data", function(data) {
-		//console.log("data "+data);
+		//onsole.log("data "+data);
 		data = data.toString().slice(0, data.length-2);
 		
 		// first handle splits
