@@ -57,6 +57,37 @@ function parseWords(text, func)
 	//PEND: maybe it just has the *** on occasion?
 	text = text.replace("***", '');
 	
+	
+	var ind = 0; 
+	
+	while (ind != -1) {
+		
+		ind = text.search(wordRegExp);
+
+		if (ind == 0) {
+			sendWord(new Date().getTime() - common.startTime, -1, text.substring(0,1), true);
+		} else if (ind > 0) {
+			var word = text.substring(0, ind);
+			var punct = text.substring(ind, ind+1);
+			
+			foundWords.push(word);
+			console.log("Word: " + word);
+			if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") curSpeakerID = 0;
+			else if (word == "OBAMA" || word == "BIDEN") curSpeakerID = 1;
+			else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") curSpeakerID = 2;
+			else { //only broadcast if not speaker name
+				namedentity(word, sentenceStartF, function(resp) {
+					handleWord(resp, false, 0, punct, func);
+				});
+			}
+	
+		}
+		
+		text = text.substring(ind+1);
+	}
+		
+	return [text, foundWords];
+	
 	//split input string with RegExo
 	var tokens = text.split(wordRegExp);
 	
@@ -84,7 +115,7 @@ function parseWords(text, func)
 	return [returnBuf, foundWords];
 }
 
-function handleWord(w, ngram, ngramInst, func)
+function handleWord(w, ngram, ngramInst, punct, func)
 {	
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var curTime = new Date().getTime();
@@ -166,6 +197,7 @@ function handleWord(w, ngram, ngramInst, func)
 						// process ngrams and send
 						processNGrams(curTime - common.startTime, w, curWordID, curSentenceID, function (ngrams) {
 							sendWord(curTime - common.startTime, object._id, w, false, cats, object.wordInstanceIDs.length, ngrams);	
+							sendWord(curTime - common.startTime + 1, -1, punct, true);	
 							func();
 						});
 					});
@@ -327,9 +359,6 @@ function parseSentence(text)
 				//console.log("Index: "+ index + " >> Punctuation: "+ punct);
 			
 				tokens[i] += punct;
-				
-				// send punctuation //PEND async problems
-				sendWord(time, 0, punct, true);
 			
 				foundSentences.push(tokens[i]);
 				console.log("Sentence: " + tokens[i]);
@@ -379,6 +408,8 @@ function sendMessage(msg) {
   Object.keys(common.engine.clients).forEach(function(key) {
     common.engine.clients[key].send(JSON.stringify(msg));
   });
+  
+  console.log(msg);
   
   // log msg
   common.mongo.collection('messages', function(err, collection) {
