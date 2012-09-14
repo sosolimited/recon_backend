@@ -104,8 +104,6 @@ function start() {
 			collection.remove(function(err, result) {});
 		});
 		
-		// reset start date
-		common.startTime = new Date().getTime();
 		
 	});
 
@@ -120,6 +118,9 @@ function loadDoc(docName, delay) {
 
 	console.log("d "+delay+" n "+docName);
 	
+	// reset start date
+	common.startTime = new Date().getTime();
+		
 	try {
 		doc = common.fs.readFileSync(__dirname + '/documents/' + docName, 'utf8');
 		
