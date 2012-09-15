@@ -119,6 +119,7 @@ function handleWord(w, ngram, ngramInst, punct, func)
 {	
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var curTime = new Date().getTime();
+	
 
 	common.mongo.collection('sentence_instances', function(err, collection) {
 		// if new sentence, generate ID and insert into sentence_instances
@@ -154,7 +155,6 @@ function handleWord(w, ngram, ngramInst, punct, func)
 		}
 		collection.insert(doc);
 		
-		console.log("w:"+w);
 		
 		//updateFreq(collection, word);
 	});
@@ -197,7 +197,7 @@ function handleWord(w, ngram, ngramInst, punct, func)
 						// process ngrams and send
 						processNGrams(curTime - common.startTime, w, curWordID, curSentenceID, function (ngrams) {
 							sendWord(curTime - common.startTime, object._id, w, false, cats, object.wordInstanceIDs.length, ngrams);	
-							sendWord(curTime - common.startTime + 1, -1, punct, true);	
+							if (punct != ' ' && punct.length == 1) sendWord(curTime - common.startTime + 1, -1, punct, true);	
 							func();
 						});
 					});

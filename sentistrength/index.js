@@ -14,7 +14,6 @@ var regex5 = new RegExp(/\S{2,}/); //finds the emoticon and the space, once rege
 
 
 function normalizeEnergy(data) {
-	console.log("data "+data);
 
 	// Contains the positive and negative energy amounts
 	var returnvals = [];
@@ -91,6 +90,7 @@ module.exports = function(msg, done) {
 
   socket.on("data", function(data) {
   
+		console.log("senti data "+data);
     // Coerce data to String, because it is a Node Buffer object.
     done(normalizeEnergy(data.toString()));
   });
