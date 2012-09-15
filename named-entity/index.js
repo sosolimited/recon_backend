@@ -21,7 +21,7 @@ module.exports = function(msg, start, done) {
 	socket.on("error", function() {});
 	
 	socket.on("data", function(data) {
-		//onsole.log("data "+data);
+		//console.log("data "+data);
 		data = data.toString().slice(0, data.length-2);
 		
 		// first handle splits
@@ -36,6 +36,11 @@ module.exports = function(msg, start, done) {
 					entity = true;
 			}
 		}
+		
+		
+		// clean backtick
+		word = word.replace("`", "\'");
+		
 		if (entity) {
 			done(word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
 		} else {
