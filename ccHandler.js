@@ -461,3 +461,4 @@ exports.parseWords = parseWords;
 exports.stripTCPDelimiter = stripTCPDelimiter;
 exports.handleChars = handleChars;
 exports.sendEndMessage = sendEndMessage;
+exports.sendMessage = sendMessage;

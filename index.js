@@ -104,8 +104,10 @@ function start() {
 			collection.remove(function(err, result) {});
 		});
 		
+		setInterval(sendStats, 1000);
 		
 	});
+	
 
     
 }
@@ -113,6 +115,25 @@ function start() {
 // do it
 start();
 
+
+function sendStats() {
+
+	console.log("send stats");
+
+	var message = {
+		type: "stats",
+		honesty: [genRand100(), genRand100()],
+		presidentiality: [genRand100(), genRand100()],
+		femininity: [genRand100(), genRand100()],
+		timeDiff: new Date().getTime() - common.startTime
+	};
+	cc.sendMessage(message);
+
+}
+
+function genRand100() {
+	return Math.floor(Math.random()*100);
+}
 
 function loadDoc(docName, delay) {
 
