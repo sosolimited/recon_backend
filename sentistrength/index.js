@@ -110,7 +110,7 @@ process.on("exit", function(code) {
 
 
 process.on("uncaughtException", function(ex) {
-  console.log('uncaughtException - exiting…'+ex);
+  console.log('sentistrength - uncaughtException - exiting…'+ex);
   process.exit();
 });
 
