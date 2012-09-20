@@ -88,7 +88,7 @@ function parseWords(text, func)
 		
 	return [text, foundWords];
 	
-	//split input string with RegExo
+	/*//split input string with RegExo
 	var tokens = text.split(wordRegExp);
 	
 	for (i in tokens)
@@ -112,7 +112,7 @@ function parseWords(text, func)
 	}
 	
 	//return both the current buffer and the found words
-	return [returnBuf, foundWords];
+	return [returnBuf, foundWords];*/
 }
 
 function handleWord(w, ngram, ngramInst, punct, func)
