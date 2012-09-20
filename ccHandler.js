@@ -141,24 +141,7 @@ function handleWord(w, ngram, ngramInst, punct, func)
 			collection.update({_id: curSentenceID}, {$push: {wordInstanceIDs: curWordID}});
 		}
 	});
-	
-	
-	common.mongo.collection('word_instances', function(err, collection) {
-		// insert into word_instances
-		var doc = {
-			_id: curWordID,
-			word: w,
-			sentenceID: curSentenceID,
-			speakerID: curSpeakerID,
-			eventID: curEventID,
-			timeDiff: curTime - common.startTime
-		}
-		collection.insert(doc);
-		
-		
-		//updateFreq(collection, word);
-	});
-	
+
 	
 	common.mongo.collection('unique_words', function(err, collection) { 
 		// upsert unique_words
@@ -193,6 +176,25 @@ function handleWord(w, ngram, ngramInst, punct, func)
 							});
 						}
 						
+						// insert into word_instances with cats
+						common.mongo.collection('word_instances', function(err, collection) {
+							// insert into word_instances
+							var doc = {
+								_id: curWordID,
+								word: w,
+								sentenceID: curSentenceID,
+								speakerID: curSpeakerID,
+								eventID: curEventID,
+								categories: cats,
+								timeDiff: curTime - common.startTime
+							}
+							collection.insert(doc);
+							
+							
+							//updateFreq(collection, word);
+						});
+						
+											
 						
 						// process ngrams and send
 						processNGrams(curTime - common.startTime, w, curWordID, curSentenceID, function (ngrams) {
@@ -292,7 +294,7 @@ function sendNewNGram(t, nid, n, nInstances) {
 		ngram: n, 
 		instances: nInstances
 	};
-  sendMessage(message);
+  common.sendMessage(message, true);
 }
 
 function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
@@ -314,7 +316,7 @@ function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 		sentenceStartF = false; //reset
 	}
 
-  sendMessage(message);
+  common.sendMessage(message, true);
 }
 
 
@@ -397,7 +399,7 @@ console.log("SENTENCE END!!");
 		length: l
 	};
   console.log(message);
-	sendMessage(message);
+	common.sendMessage(message, true);
 }
 
 function sendEndMessage() {
@@ -405,22 +407,7 @@ function sendEndMessage() {
 		type: "transcriptDone",
 		timeDiff: (new Date().getTime()) - common.startTime
 	};
-	sendMessage(message);
-}
-
-function sendMessage(msg) {
-	// send msg
-  Object.keys(common.engine.clients).forEach(function(key) {
-    common.engine.clients[key].send(JSON.stringify(msg));
-  });
-  
-  //console.log(msg);
-  
-  // log msg
-  common.mongo.collection('messages', function(err, collection) {
-		collection.insert(msg);
-	});
-	
+	common.sendMessage(message, true);
 }
 
 
@@ -461,4 +448,3 @@ exports.parseWords = parseWords;
 exports.stripTCPDelimiter = stripTCPDelimiter;
 exports.handleChars = handleChars;
 exports.sendEndMessage = sendEndMessage;
-exports.sendMessage = sendMessage;
