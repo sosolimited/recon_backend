@@ -1,6 +1,7 @@
 //for testing
 var common = require('./common.js');
 var cc = require('./ccHandler.js');
+var stats = require('./statsHandler.js');
 
 
 var tcpServer;
@@ -104,7 +105,7 @@ function start() {
 			collection.remove(function(err, result) {});
 		});
 		
-		setInterval(sendStats, 1000);
+		setInterval(stats.sendStats, 5000);
 		
 	});
 	
@@ -115,25 +116,6 @@ function start() {
 // do it
 start();
 
-
-function sendStats() {
-
-	console.log("send stats");
-
-	var message = {
-		type: "stats",
-		honesty: [genRand100(), genRand100()],
-		presidentiality: [genRand100(), genRand100()],
-		femininity: [genRand100(), genRand100()],
-		timeDiff: new Date().getTime() - common.startTime
-	};
-	cc.sendMessage(message);
-
-}
-
-function genRand100() {
-	return Math.floor(Math.random()*100);
-}
 
 function loadDoc(docName, delay) {
 
@@ -165,9 +147,7 @@ function loadHistory() {
 			cursor.each(function(err, msg) { 
 				console.log("SEND "+msg);
 				// PEND only send to client requesting!
-				Object.keys(common.engine.clients).forEach(function(key) {
-			    common.engine.clients[key].send(JSON.stringify(msg));
-			  });
+				common.sendMessage(msg, false);
 			});
 		});
 	});	
