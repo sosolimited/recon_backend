@@ -7,6 +7,8 @@ var engine = require("engine.io");
 var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, 27017, {strict:true}));
 var engine =  engine.listen(8081, "0.0.0.0");
 
+var usingDoc = false; //JRO
+
 function sendMessage(msg, log) {
 
 	if (engine.clients) {
