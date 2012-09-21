@@ -191,8 +191,9 @@ function start() {
 		});
 		
 		//092012 JRO testing
-		//setInterval(stats.sendStats, 5000);
-		setInterval(stats.sendStats, 60000);
+		//setInterval(stats.sendStats, 60000);
+		setInterval(stats.sendStats, 5000);
+		
 		
 	});
 	
