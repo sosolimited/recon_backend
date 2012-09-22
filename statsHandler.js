@@ -58,6 +58,7 @@ function calcCats(msg) {
 		} else {
 	
 			common.mongo.collection('word_instances', function(err, collection) {
+			
 				collection.find({categories:catName}).count(function(err, val) {
 	
 					addVal(msg, traitModifier, traitName, val, remainder);
