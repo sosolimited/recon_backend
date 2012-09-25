@@ -105,7 +105,7 @@ function start() {
 			collection.remove(function(err, result) {});
 		});
 		
-		setInterval(stats.sendStats, 5000);
+		//setInterval(stats.sendStats, 5000);
 		
 	});
 	
