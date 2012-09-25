@@ -38,6 +38,7 @@ module.exports = {
 	sendMessage: sendMessage,
 	
 	mongo : mongo,
- 	engine :engine
+ 	engine : engine,
+ 	async : require('async')
 };
 

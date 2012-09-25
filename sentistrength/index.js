@@ -108,12 +108,12 @@ process.on("exit", function(code) {
   __dirname + "/resources/data/", "listen", port ]);
 });
 
-
+/*
 process.on("uncaughtException", function(ex) {
   console.log('sentistrength - uncaughtException - exiting…'+ex);
   process.exit();
 });
-
+*/
 process.on("disconnect", function() {
   console.log('disconnect - exiting…');
   process.exit();
