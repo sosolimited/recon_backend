@@ -158,7 +158,7 @@ function getCats(w, cb) {
 						if (wdoc) {
 							//console.log("WILDCARD " + w);
 							cb(null, wdoc.cat);
-						}
+						} else cb(null, []);
 					});
 				});
 			}
