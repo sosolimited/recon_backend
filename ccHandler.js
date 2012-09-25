@@ -142,6 +142,11 @@ console.log("HANDLE WORD "+w);
 function getCats(w, cb) {
 
 	var cats = [];
+	
+	if (w.search(/\d/) != -1) {
+		cats.push('number');
+		console.log("FOUND NUMBER "+w);
+	}
 
 	common.mongo.collection('LIWC', function(e, c) {
 		// first check if it's in LIWC (non wildcard)
@@ -150,15 +155,15 @@ function getCats(w, cb) {
 			// add categories
 			if (doc) {
 				//console.log("NORMAL "+w);
-				cb(null, doc.cat);
+				cb(null, cats.concat(doc.cat));
 			} 
 			else { // if not found, check wildcards
 				common.mongo.collection('LIWC_wildcards', function(e, c) {
 					c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
 						if (wdoc) {
 							//console.log("WILDCARD " + w);
-							cb(null, wdoc.cat);
-						} else cb(null, []);
+							cb(null, cats.concat(wdoc.cat));
+						} else cb(null, cats);
 					});
 				});
 			}
