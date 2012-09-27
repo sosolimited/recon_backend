@@ -8,8 +8,8 @@ var sentistrength = require(__dirname + "/sentistrength");
 //These variables need to remain global so that we can add to the buffers periodically
 var curWordBuffer = "";
 var curSentenceBuffer = "";
-var curSpeakerID = 0; //0 - moderator, 1 - obama, 2 - romney
 var curEventID = 0;
+var curSpeaker = 0;
 var sentenceStartF = true;
 var cur2Gram = [];
 var cur3Gram = [];
@@ -119,20 +119,20 @@ function parseWords(text, func)
 		
 			console.log("Word: " + word);
 			if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") {
-				speaker = 0;
+				curSpeaker = 0;
 				speakerSwitch = true;
 			}
 			else if (word == "OBAMA" || word == "BIDEN") {
-				speaker = 1;
+				curSpeaker = 1;
 				speakerSwitch = true;
 			}
 			else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") {
-				speaker = 2;
+				curSpeaker = 2;
 				speakerSwitch = true;
 			}
 
 			namedentity(word, sentenceStartF, function(resp) {
-				handleWord(speaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
+				handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
 			});
 		}
 		//Otherwise this should be returned as part of the buffer
@@ -149,7 +149,7 @@ function parseWords(text, func)
 function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 {	
 
-	console.log("HANDLE WORD "+leadPunct+" "+w+" "+endPunct);
+	console.log("HANDLE WORD "+leadPunct+" "+w+" "+endPunct+" speaker "+speaker);
 	curSentence += w+" ";
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var timeDiff = new Date().getTime() - common.startTime;
@@ -159,7 +159,7 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 
 	var funcs = [
 	    function(cb) { // log sentence
-	    	logSentence(curWordID, timeDiff, cb);
+	    	logSentence(speaker, curWordID, timeDiff, cb);
 	    },
 	    function(cb) { // look up categories
 		  	getCats(w, cb);
@@ -170,16 +170,16 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 	    },
 	    function(uniqueWDoc, cb) { // log word instance
 		    //console.log("uniqueWDoc "+uniqueWDoc);
-	   		logWordInstance(curWordID, w, uniqueWDoc, timeDiff, cb);
+	   		logWordInstance(speaker, curWordID, uniqueWDoc, timeDiff, cb);
 	   	},
 	    function(uniqueWDoc, cb) { // process 4 grams
-				processNGrams(4, timeDiff, w, curWordID, curSentenceID, uniqueWDoc, [], cb);
+				processNGrams(4, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, [], cb);
 			},
 	    function(uniqueWDoc, ngrams, cb) { // process 3 grams
-				processNGrams(3, timeDiff, w, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
+				processNGrams(3, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
 			},
 	    function(uniqueWDoc, ngrams, cb) { // process 2 grams
-				processNGrams(2, timeDiff, w, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
+				processNGrams(2, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
 			},
 			function(uniqueWDoc, ngrams, cb) { // send punctuation
 				if (leadPunct) {
@@ -202,7 +202,7 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 			},
 			function(uniqueWDoc, ngrams, cb) {
 				if (sentenceEnd) 
-					handleSentenceEnd(timeDiff, cb)
+					handleSentenceEnd(timeDiff, speaker, cb)
 				else {
 					cb(null);
 				}
@@ -267,26 +267,26 @@ function logUniqueWord(wordID, w, cats, cb) {
 	});
 }
 
-function logWordInstance(wordID, w, uniqueWdoc, time, cb) {
+function logWordInstance(speaker, wordID, uniqueWDoc, time, cb) {
 	//console.log('logWordInstance');
 	// insert into word_instances with cats
 	common.mongo.collection('word_instances'+common.db_suffix, function(err, collection) {
 		// insert into word_instances
 		var doc = {
 			_id: wordID,
-			word: w,
+			word: uniqueWDoc.word,
 			sentenceID: curSentenceID,
-			speakerID: curSpeakerID,
+			speakerID: speaker,
 			eventID: curEventID,
-			categories: uniqueWdoc.categories,
+			categories: uniqueWDoc.categories,
 			timeDiff: time
 		}
 		collection.insert(doc);
-		cb(null, uniqueWdoc);
+		cb(null, uniqueWDoc);
 	});
 }
 
-function logSentence(wordID, time, cb) {
+function logSentence(speaker, wordID, time, cb) {
 	
 	//console.log('logSentence');	
 	common.mongo.collection('sentence_instances'+common.db_suffix, function(err, collection) {
@@ -296,7 +296,7 @@ function logSentence(wordID, time, cb) {
 			var doc = {
 				_id: curSentenceID,
 				wordInstanceIDs: [wordID],
-				speakerID: curSpeakerID,
+				speakerID: speaker,
 				eventID: curEventID,
 				timeDiff: time
 			}
@@ -312,7 +312,7 @@ function logSentence(wordID, time, cb) {
 	});
 }
 
-function processNGrams(l, t, w, wID, sID, uniqueWDoc, ngrams, cb) {
+function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 
 	//console.log('processNGrams');
 	
@@ -324,7 +324,7 @@ function processNGrams(l, t, w, wID, sID, uniqueWDoc, ngrams, cb) {
 	// check for 2grams
 	if (curGram.length == l) {
 		curGram.shift();
-		curGram.push(w);
+		curGram.push(uniqueWDoc.word);
 		common.mongo.collection('unique_'+l+'grams'+common.db_suffix, function(e, c) {
 			c.findAndModify(
 				{ngram: curGram},
@@ -343,7 +343,7 @@ function processNGrams(l, t, w, wID, sID, uniqueWDoc, ngrams, cb) {
 			);
 		});
 	} else {
-		curGram.push(w);
+		curGram.push(uniqueWDoc.word);
 		cb(null, uniqueWDoc, ngrams);
 	}
 }
@@ -384,10 +384,10 @@ function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 }
 
 
-function handleSentenceEnd(timeDiff, cb) {
+function handleSentenceEnd(timeDiff, speaker, cb) {
 		// analyze sentiment
   sentistrength(curSentence, function(sentiment) {
-		sendSentenceEnd(timeDiff, sentiment, curSentence.split(" ").length-1);
+		sendSentenceEnd(timeDiff, speaker, sentiment, curSentence.split(" ").length-1);
 			
 		sentenceStartF = true;
 		curSentence = "";
@@ -402,12 +402,12 @@ function handleSentenceEnd(timeDiff, cb) {
 }
 
 
-function sendSentenceEnd(t, senti, l)
+function sendSentenceEnd(t, speaker, senti, l)
 {
 	var message = {
 		type: "sentenceEnd",
 		timeDiff: t,
-		speaker: curSpeakerID,
+		speaker: speaker,
 		sentiment: senti,
 		length: l
 	};
