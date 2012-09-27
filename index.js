@@ -23,7 +23,7 @@ stdin.on('data', function(chunk) {
 	if (msg == 'close') 
 	{
 		if (ccSocket) {
-			ccSocket.write('close***', 'utf8', function() {
+			ccSocket.write('close\n', 'utf8', function() {
 				console.log('closing existing CC socket');
 			});
 		}
@@ -32,7 +32,7 @@ stdin.on('data', function(chunk) {
 	else if (msg = 'test')
 	{
 		if (ccSocket) {
-			ccSocket.write('test***', 'utf8', function() {
+			ccSocket.write('test\n', 'utf8', function() {
 				console.log('Testing CC socket ' + ccSocket.bytesWritten );
 			});
 		}
@@ -116,13 +116,21 @@ function start() {
 			data = String(data);
 			//console.log("data: "+data);
 			
-			var msg = cc.stripTCPDelimiter(data);			
-			var msgData = parseIncoming(msg);
+			var msg = cc.stripTCPDelimiter(data);	
+			//console.log(msg);		
 			
+			cc.handleChars(msg);
+			
+			
+			//092712 - no longer using message types since TCP gets concatenated
+			/*
+			var msgData = parseIncoming(msg);
+		
 			if (msgData.type == 'c')
 			{
 				//handle the CC
-				cc.handleChars(msgData.body);
+				console.log(msgData.body);
+				//cc.handleChars(msgData.body);
 			}
 			else if (msgData.type == 's')
 			{
@@ -131,6 +139,7 @@ function start() {
 				//092712 - this method has been deprecated we now handle speaker switching with special words
 				//cc.setSpeaker(msgData.body);
 			}
+			*/
 			
 		});
 		
@@ -165,7 +174,7 @@ function start() {
 		console.log('Server connections:' + tcpServer.connections);
 		
 		if (ccSocket) {
-			ccSocket.write('close***', 'utf8', function() {
+			ccSocket.write('close\n', 'utf8', function() {
 				console.log('socket disconnect sent');
 			});
 			ccSocket.destroy();
@@ -270,7 +279,8 @@ function sendCharsFromDoc() {
 	
 }
 
-//JRO
+//JRO - no longer useful
+/*
 function parseIncoming(message)
 {
 	if (message.length > 2)
@@ -283,6 +293,7 @@ function parseIncoming(message)
 	}
 	else return {type:'unformatted', body:message};
 }
+*/
 
 /*
 //JRO - deprecated method?
