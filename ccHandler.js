@@ -21,10 +21,17 @@ var minNGramOccurrences = 4;
 var curSentenceID = 0;
 
 //Regular Expressions
-var wordRegExp = new RegExp(/[\s \! \? \; \( \) \[ \] \{ \} \< \> "]|,(?=\W)|[\.\-\&](?=\W)|:(?!\d)/g);
+//var wordRegExp = new RegExp(/[\s \! \? \; \( \) \[ \] \{ \} \< \> "]|,(?=\W)|[\.\-\&](?=\W)|:(?!\d)/g);
 //var sentenceRegExp = new RegExp(/[\.|\?|\!]\s/g);
-var sentenceRegExp = new RegExp(/[\.|\?|\!]/);
-var abrevRegExp = new RegExp(/(Mr|Mrs|Ms|Dr|Sr|U\.S|D\.C)$/i);
+//var sentenceRegExp = new RegExp(/[\.|\?|\!]/);
+//var abrevRegExp = new RegExp(/(Mr|Mrs|Ms|Dr|Sr|U\.S|D\.C)$/i);
+
+var spaceRegEx = new RegExp(/\S{1,}/g);
+var leadPunctRegEx = new RegExp(/^[\"|\'|>|-|+|\[|\{|$]{1,}/);
+var numberRegEx = new RegExp(/\d{1,}.{1,}\d{1,}/);
+var abbrevRegEx = new RegExp(/\w{1,}.{1,}\w{1,}/);
+var wordRegEx = new RegExp(/\w{1,}/);
+var sentenceEndRegEx = new RegExp(/[\.|\?|\!]/);
 
 //Called from outside of 
 function handleChars(newChars)
@@ -41,59 +48,108 @@ function handleChars(newChars)
 	//3. find the words in the buffer
 	curWordBuffer = parseWords(curWordBuffer)[0];
 	
-	//4. find sentences
-	//curSentenceBuffer = parseSentence(curSentenceBuffer)[0];
-	//console.log(curBuffer);
-	
 }
 
 //Function takes a buffer and pulls out any words
 function parseWords(text, func)
 {
+
 	//return elements
 	var foundWords = [];
 	var returnBuf = "";
-	
+
 	//PEND: maybe it just has the *** on occasion?
 	text = text.replace("***", '');
-	
-	
-	var ind = 0; 
-	
-	while (ind != -1) {
-		
-		ind = text.search(wordRegExp);
 
-		if (ind == 0) {
-			sendWord(function(){}, new Date().getTime() - common.startTime, -1, text.substring(0,1), true);
-		} else if (ind > 0) {
-			var word = text.substring(0, ind);
-			var punct = text.substring(ind, ind+1);
+	//split input string with RegExo
+	var tokens = text.match(spaceRegEx);
+	var substrL = 0;
+
+	for (i in tokens)
+	{
+		//If the element isn't the last in an array, it is a new word
+		if ((i<tokens.length - 1) && tokens[i] !== "")
+		{
+			var tok = tokens[i];
+			console.log("tok "+tok);
+			curSentence += tok+" ";
 			
-			foundWords.push(word);
-			//console.log("Word: " + word);
-			if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") curSpeakerID = 0;
-			else if (word == "OBAMA" || word == "BIDEN") curSpeakerID = 1;
-			else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") curSpeakerID = 2;
-			else { //only broadcast if not speaker name
-				namedentity(word, sentenceStartF, function(resp) {
-					handleWord(resp, false, 0, punct, func);
-				});
+			substrL += tokens[i].length+1;
+			
+			// strip any leading punctuation
+			var leadPunct = tok.match(leadPunctRegEx);
+			if (leadPunct) {
+				tok = tok.substring(leadPunct.length);
+				console.log('lead p');
 			}
-	
+			
+			// pull any numbers
+			
+			var word;
+			var sentenceEnd = false;
+			
+			var numWord = tok.match(numberRegEx);
+			if (numWord) {
+				console.log('number');
+				word = numWord;
+			}
+		
+			// pull any abbreviations
+			var abbrevWord = tok.match(abbrevRegEx);
+			if (abbrevWord && !word) {
+				console.log('abbrev');
+				word = abbrevWord;
+			}
+			
+			// pull out word
+			var plainWord = tok.match(wordRegEx);
+			if (plainWord && !word) {
+				word = plainWord;
+			}
+			
+			var endPunct = tok.replace(word, "");
+			
+			// check if sentence end
+			if (endPunct.search(sentenceEndRegEx) != -1) {
+				sentenceEnd = true;
+			}
+		
+			var speaker = 0;
+			var speakerSwitch = false;
+		
+			console.log("Word: " + word);
+			if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") {
+				speaker = 0;
+				speakerSwitch = true;
+			}
+			else if (word == "OBAMA" || word == "BIDEN") {
+				speaker = 1;
+				speakerSwitch = true;
+			}
+			else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") {
+				speaker = 2;
+				speakerSwitch = true;
+			}
+
+			namedentity(word, sentenceStartF, function(resp) {
+				handleWord(speaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
+			});
 		}
-		
-		text = text.substring(ind+1);
+		//Otherwise this should be returned as part of the buffer
+		else {
+			returnBuf = text.substring(substrL);
+		}
 	}
-		
-	return [text, foundWords];
+
+	//return both the current buffer and the found words
+	return [returnBuf, foundWords];
 
 }
 
-function handleWord(w, ngram, ngramInst, punct, func)
+function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 {	
 
-	console.log("HANDLE WORD "+w+punct);
+	console.log("HANDLE WORD "+leadPunct+" "+w+" "+endPunct);
 	curSentence += w+" ";
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var timeDiff = new Date().getTime() - common.startTime;
@@ -125,19 +181,30 @@ function handleWord(w, ngram, ngramInst, punct, func)
 	    function(uniqueWDoc, ngrams, cb) { // process 2 grams
 				processNGrams(2, timeDiff, w, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
 			},
+			function(uniqueWDoc, ngrams, cb) { // send punctuation
+				if (leadPunct) {
+					if (leadPunct != ' ' && leadPunct != '\n' && leadPunct.length == 1) 
+						sendWord(cb, timeDiff - 1, speaker, -1, leadPunct, true);
+					else cb(null, uniqueWDoc, ngrams);	
+				} else cb(null, uniqueWDoc, ngrams);
+			},
 			function(uniqueWDoc, ngrams, cb) { // send word
-				sendWord(cb, timeDiff, uniqueWDoc._id, w, false, uniqueWDoc.categories, uniqueWDoc.wordInstanceIDs.length, ngrams);	
+				if (!speakerSwitch)
+					sendWord(cb, timeDiff, speaker, uniqueWDoc, uniqueWDoc.word, false, ngrams);	
 			},
-			function(cb) { // send punctuation
-				if (punct != ' ' && punct != '\n' && punct.length == 1) sendWord(cb, timeDiff + 1, -1, punct, true);
-				else cb(null);	
+			function(uniqueWDoc, ngrams, cb) { // send punctuation
+				if (endPunct) {
+					if (endPunct != ' ' && endPunct != '\n' && endPunct.length == 1) 
+						sendWord(cb, timeDiff + 1, speaker, -1, endPunct, true);
+					else cb(null, uniqueWDoc, ngrams);	
+				} 
+				else cb(null, uniqueWDoc, ngrams);
 			},
-			function(cb) {
-				if (punct.search(sentenceRegExp) != -1) 
+			function(uniqueWDoc, ngrams, cb) {
+				if (sentenceEnd) 
 					handleSentenceEnd(timeDiff, cb)
 				else {
 					cb(null);
-					console.log("no sentence"+punct);
 				}
 			}
 	];
@@ -150,6 +217,7 @@ function handleWord(w, ngram, ngramInst, punct, func)
 
 
 }
+
 
 function getCats(w, cb) {
 
@@ -185,7 +253,7 @@ function getCats(w, cb) {
 function logUniqueWord(wordID, w, cats, cb) {
 	
 	//console.log('logUniqueWord');
-	common.mongo.collection('unique_words', function(err, collection) { 
+	common.mongo.collection('unique_words'+common.db_suffix, function(err, collection) { 
 		// upsert unique_words
 		collection.findAndModify(
 			{word: w}, 
@@ -202,7 +270,7 @@ function logUniqueWord(wordID, w, cats, cb) {
 function logWordInstance(wordID, w, uniqueWdoc, time, cb) {
 	//console.log('logWordInstance');
 	// insert into word_instances with cats
-	common.mongo.collection('word_instances', function(err, collection) {
+	common.mongo.collection('word_instances'+common.db_suffix, function(err, collection) {
 		// insert into word_instances
 		var doc = {
 			_id: wordID,
@@ -221,7 +289,7 @@ function logWordInstance(wordID, w, uniqueWdoc, time, cb) {
 function logSentence(wordID, time, cb) {
 	
 	//console.log('logSentence');	
-	common.mongo.collection('sentence_instances', function(err, collection) {
+	common.mongo.collection('sentence_instances'+common.db_suffix, function(err, collection) {
 		if (sentenceStartF) {
 			curSentenceID = new common.mongo.bson_serializer.ObjectID();
 			
@@ -257,7 +325,7 @@ function processNGrams(l, t, w, wID, sID, uniqueWDoc, ngrams, cb) {
 	if (curGram.length == l) {
 		curGram.shift();
 		curGram.push(w);
-		common.mongo.collection('unique_'+l+'grams', function(e, c) {
+		common.mongo.collection('unique_'+l+'grams'+common.db_suffix, function(e, c) {
 			c.findAndModify(
 				{ngram: curGram},
 				[['_id','asc']], 
@@ -292,27 +360,27 @@ function sendNewNGram(t, nid, n, nInstances) {
   common.sendMessage(message, true);
 }
 
-function sendWord(cb, t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
+function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 {
 	var message = {
 		type: "word",
 		timeDiff: t,
-		dbid: wid,
+		dbid: uniqueWDoc._id,
 		word: w,
-		speaker: curSpeakerID,
+		speaker: s,
 		punctuationFlag: punctuationF
 	};
 	
 	if (!punctuationF) {
 		message['sentenceStartFlag'] = sentenceStartF;
-		message['cats'] = wcats;
-		message['wordInstances'] = numInstances;
+		message['cats'] = uniqueWDoc.categories;
+		message['wordInstances'] = uniqueWDoc.wordInstanceIDs.length;
 		message['ngrams'] = ngramsArr;
 		sentenceStartF = false; //reset
 	}
 
   common.sendMessage(message, true);
-  cb(null);
+  cb(null, uniqueWDoc, ngramsArr);
 }
 
 
@@ -333,73 +401,6 @@ function handleSentenceEnd(timeDiff, cb) {
 	});
 }
 
-//Function takes a buffer and pulls out any sentences
-
-function parseSentence(text)
-{
-	var time = (new Date().getTime()) - common.startTime;
-
-	//return elements
-	var foundSentences = [];
-	var returnBuf = "";
-	
-	//maybe it just has the *** on occasion?
-	text = text.replace("***", '');
-	
-	//split input string with RegExo
-	var tokens = text.split(sentenceRegExp);
-	
-	
-	for (i=0; i<tokens.length; i++)
-	{
-		//if (tokens.length > 1) console.log("  Token:"+i+":"+tokens[i]+"<<");
-	
-		//If the element isn't the last in an array, it is a new word
-		if ((i<tokens.length - 1) && tokens[i] !== "")
-		{
-			//if the sentence ends with an abbrev, it is a false positive
-			//concat the current token and the next token
-			if (checkAbrev(tokens[i])) 
-			{
-				var next = tokens[i]+". "+tokens[i+1];
-				//console.log("  Next:"+next);
-				
-				tokens[i+1] = next;
-			}
-			else 
-			{		
-				//need to find the punctuation in the original word
-				var index = text.lastIndexOf(tokens[i]) + tokens[i].length;
-				var punct = text.slice(index, index+1)
-				//console.log("Index: "+ index + " >> Punctuation: "+ punct);
-			
-				tokens[i] += punct;
-			
-				foundSentences.push(tokens[i]);
-				console.log("Sentence: " + tokens[i]);
-				
-				var str = tokens[i];
-				
-				// analyze sentiment
-	      sentistrength(tokens[i], function(sentiment) {
-					sendSentenceEnd(time, sentiment, str.split(" ").length-1);
-				});
-				sentenceStartF = true;
-				
-				// reset ngrams at start of sentence
-				cur2Gram = [];
-				cur3Gram = [];
-				cur4Gram = [];
-			}		
-			
-		}	
-		//Otherwise this should be returned as part of the buffer
-		else returnBuf = tokens[i];
-	}
-	
-	//return both the current buffer and the found words
-	return [returnBuf, foundSentences];
-}
 
 function sendSentenceEnd(t, senti, l)
 {

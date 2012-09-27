@@ -17,7 +17,7 @@ function sendMessage(msg, log) {
 		  engine.clients[key].send(JSON.stringify(msg));
 	  });
 	  
-	  //console.log(msg);
+	  console.log(msg);
 	}
 
   // log msg
