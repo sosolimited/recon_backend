@@ -63,10 +63,10 @@ process.on("exit", function(code) {
 	  "-loadClassifier", __dirname + "/classifiers/" + classifier ]);
 });
 
-process.on("uncaughtException", function(ex) {
+/*process.on("uncaughtException", function(ex) {
   console.log('named-entity - uncaughtException - exiting…'+ex);
   process.exit();
-});
+});*/
 
 process.on("disconnect", function() {
   console.log('disconnect - exiting…');

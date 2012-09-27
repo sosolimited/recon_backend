@@ -52,6 +52,21 @@ process.on( 'SIGINT', function() {
 
 function start() {
 
+	// Listen for input on stdin
+	process.openStdin().on('data', function(chunk) { 
+	
+		//trim the input
+		var msg = chunk.toString().replace('\n', '');
+		console.log("Input message: " + msg + "<"); 
+	
+		if (msg.indexOf('use db') != -1) 
+		{
+			common.setWriteDb(msg.substring(7));
+		}
+	
+	});
+
+
 	// on a 'connection' event
   common.engine.on("connection", function(socket) {
 	
@@ -113,7 +128,8 @@ function start() {
 			{
 				//speaker switching
 				//console.log("Speaker Switch: " + msgData.body);
-				cc.setSpeaker(msgData.body);
+				//092712 - this method has been deprecated we now handle speaker switching with special words
+				//cc.setSpeaker(msgData.body);
 			}
 			
 		});
@@ -167,33 +183,30 @@ function start() {
 	// mongodb
 	common.mongo.open(function(err, p_client) {
 	
-		////  PEND TEMP FOR TESTING!!! initialize for testing
-	
+	//092012 JRO testing
+	//setInterval(stats.sendStats, 60000);
+
+	//  empty test dbs
+	for (var i=0; i<3; i++) {
 		// clear out dbs
-		common.mongo.collection("word_instances", function(err, collection) {
+		common.mongo.collection("word_instances_d"+i+"test", function(err, collection) {
 			collection.remove(function(err, result) {});
 		});
-		common.mongo.collection("sentence_instances", function(err, collection) {
+		common.mongo.collection("sentence_instances_d"+i+"test", function(err, collection) {
 			collection.remove(function(err, result) {});
 		});
-		common.mongo.collection("unique_words", function(err, collection) {
-			collection.remove(function(err, result) {});
-		});
-		
-		common.mongo.collection("unique_2grams", function(err, collection) {
-			collection.remove(function(err, result) {});
-		});
-		common.mongo.collection("unique_3grams", function(err, collection) {
-			collection.remove(function(err, result) {});
-		});
-		common.mongo.collection("unique_4grams", function(err, collection) {
+		common.mongo.collection("unique_words_d"+i+"test", function(err, collection) {9
 			collection.remove(function(err, result) {});
 		});
 		
-		//092012 JRO testing
-		//setInterval(stats.sendStats, 60000);
-		setInterval(stats.sendStats, 5000);
-		
+		for (var j=2; j<5; j++) {
+			common.mongo.collection("unique_"+j+"grams_d"+i+"test", function(err, collection) {
+				collection.remove(function(err, result) {});
+			});
+		}
+	}
+
+		setInterval(stats.sendStats, 5000);	
 		
 	});
 	

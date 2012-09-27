@@ -14,6 +14,7 @@ var sentenceStartF = true;
 var cur2Gram = [];
 var cur3Gram = [];
 var cur4Gram = [];
+var curSentence = "";
 var minNGramOccurrences = 4;
 
 //MongoDB stuff
@@ -21,7 +22,8 @@ var curSentenceID = 0;
 
 //Regular Expressions
 var wordRegExp = new RegExp(/[\s \! \? \; \( \) \[ \] \{ \} \< \> "]|,(?=\W)|[\.\-\&](?=\W)|:(?!\d)/g);
-var sentenceRegExp = new RegExp(/[\.|\?|\!]\s/g);
+//var sentenceRegExp = new RegExp(/[\.|\?|\!]\s/g);
+var sentenceRegExp = new RegExp(/[\.|\?|\!]/);
 var abrevRegExp = new RegExp(/(Mr|Mrs|Ms|Dr|Sr|U\.S|D\.C)$/i);
 
 //Called from outside of 
@@ -37,12 +39,10 @@ function handleChars(newChars)
 	curSentenceBuffer += newChars;
 	
 	//3. find the words in the buffer
-	curWordBuffer = parseWords(curWordBuffer, function() {
-		
-		//4. find sentences
-		curSentenceBuffer = parseSentence(curSentenceBuffer)[0];
-
-	})[0];
+	curWordBuffer = parseWords(curWordBuffer)[0];
+	
+	//4. find sentences
+	//curSentenceBuffer = parseSentence(curSentenceBuffer)[0];
 	//console.log(curBuffer);
 	
 }
@@ -65,7 +65,7 @@ function parseWords(text, func)
 		ind = text.search(wordRegExp);
 
 		if (ind == 0) {
-			sendWord(new Date().getTime() - common.startTime, -1, text.substring(0,1), true);
+			sendWord(function(){}, new Date().getTime() - common.startTime, -1, text.substring(0,1), true);
 		} else if (ind > 0) {
 			var word = text.substring(0, ind);
 			var punct = text.substring(ind, ind+1);
@@ -86,11 +86,18 @@ function parseWords(text, func)
 					});
 				}
 			}
+			//092712 - JRO using special words as CC to handle speaker switching
 			else
 			{
-				namedentity(word, sentenceStartF, function(resp) {
+				if (word == "SPEAKER_MODERATOR") curSpeakerID = 0;
+				else if (word == "SPEAKER_OBAMA") curSpeakerID = 1;
+				else if (word == "SPEAKER_ROMNEY") curSpeakerID = 2;
+
+				else { //only broadcast if not speaker name
+					namedentity(word, sentenceStartF, function(resp) {
 						handleWord(resp, false, 0, punct, func);
 					});
+				};
 			}
 	
 		}
@@ -99,204 +106,199 @@ function parseWords(text, func)
 	}
 		
 	return [text, foundWords];
-	
-	/*//split input string with RegExo
-	var tokens = text.split(wordRegExp);
-	
-	for (i in tokens)
-	{
-		//If the element isn't the last in an array, it is a new word
-		if ((i<tokens.length - 1) && tokens[i] !== "")
-		{
-			foundWords.push(tokens[i]);
-			console.log("Word: " + tokens[i]);
-			if (tokens[i] == "MODERATOR" || tokens[i] == "QUESTION" || tokens[i] == "BROKAW" || tokens[i] == "IFILL") curSpeakerID = 0;
-			else if (tokens[i] == "OBAMA" || tokens[i] == "BIDEN") curSpeakerID = 1;
-			else if (tokens[i] == "MCCAIN" || tokens[i] == "ROMNEY" || tokens[i] == "PALIN") curSpeakerID = 2;
-			else { //only broadcast if not speaker name
-				namedentity(tokens[i], sentenceStartF, function(resp) {
-					handleWord(resp, false, 0, func); //PEND updates these args to be correct
-				});
-			}
-		}
-		//Otherwise this should be returned as part of the buffer
-		else returnBuf = tokens[i];
-	}
-	
-	//return both the current buffer and the found words
-	return [returnBuf, foundWords];*/
+
 }
 
 function handleWord(w, ngram, ngramInst, punct, func)
 {	
-	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
-	var curTime = new Date().getTime();
-	
 
+	console.log("HANDLE WORD "+w+punct);
+	curSentence += w+" ";
+	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
+	var timeDiff = new Date().getTime() - common.startTime;
+	
+	// if new sentence, generate ID and insert into sentence_instances
+
+
+	var funcs = [
+	    function(cb) { // log sentence
+	    	logSentence(curWordID, timeDiff, cb);
+	    },
+	    function(cb) { // look up categories
+		  	getCats(w, cb);
+	    },
+	    function(cats, cb) { // log unique word
+		    //console.log("cats "+cats);
+		    logUniqueWord(curWordID, w, cats, cb);
+	    },
+	    function(uniqueWDoc, cb) { // log word instance
+		    //console.log("uniqueWDoc "+uniqueWDoc);
+	   		logWordInstance(curWordID, w, uniqueWDoc, timeDiff, cb);
+	   	},
+	    function(uniqueWDoc, cb) { // process 4 grams
+				processNGrams(4, timeDiff, w, curWordID, curSentenceID, uniqueWDoc, [], cb);
+			},
+	    function(uniqueWDoc, ngrams, cb) { // process 3 grams
+				processNGrams(3, timeDiff, w, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
+			},
+	    function(uniqueWDoc, ngrams, cb) { // process 2 grams
+				processNGrams(2, timeDiff, w, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
+			},
+			function(uniqueWDoc, ngrams, cb) { // send word
+				sendWord(cb, timeDiff, uniqueWDoc._id, w, false, uniqueWDoc.categories, uniqueWDoc.wordInstanceIDs.length, ngrams);	
+			},
+			function(cb) { // send punctuation
+				if (punct != ' ' && punct != '\n' && punct.length == 1) sendWord(cb, timeDiff + 1, -1, punct, true);
+				else cb(null);	
+			},
+			function(cb) {
+				if (punct.search(sentenceRegExp) != -1) 
+					handleSentenceEnd(timeDiff, cb)
+				else {
+					cb(null);
+					console.log("no sentence"+punct);
+				}
+			}
+	];
+
+	var cb = function(err, res) {
+	    console.log(arguments);
+	};
+
+	common.async.waterfall(funcs, cb);
+
+
+}
+
+function getCats(w, cb) {
+
+	var cats = [];
+	
+	if (w.search(/\d/) != -1) {
+		cats.push('number');
+	}
+
+	common.mongo.collection('LIWC', function(e, c) {
+		// first check if it's in LIWC (non wildcard)
+		c.findOne({'word':w.toLowerCase()}, function(err, doc) {
+		
+			// add categories
+			if (doc) {
+				//console.log("NORMAL "+w);
+				cb(null, cats.concat(doc.cat));
+			} 
+			else { // if not found, check wildcards
+				common.mongo.collection('LIWC_wildcards', function(e, c) {
+					c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
+						if (wdoc) {
+							//console.log("WILDCARD " + w);
+							cb(null, cats.concat(wdoc.cat));
+						} else cb(null, cats);
+					});
+				});
+			}
+		});
+	});
+}
+
+function logUniqueWord(wordID, w, cats, cb) {
+	
+	//console.log('logUniqueWord');
+	common.mongo.collection('unique_words', function(err, collection) { 
+		// upsert unique_words
+		collection.findAndModify(
+			{word: w}, 
+			[['_id','asc']], 
+			{$push: {wordInstanceIDs: wordID, sentenceInstanceIDs: curSentenceID}, $set: {categories: cats}},
+			{upsert:true, new:true},
+			function(err, object) {
+				//console.log("object "+object);
+				cb(null, object);
+		});
+	});
+}
+
+function logWordInstance(wordID, w, uniqueWdoc, time, cb) {
+	//console.log('logWordInstance');
+	// insert into word_instances with cats
+	common.mongo.collection('word_instances', function(err, collection) {
+		// insert into word_instances
+		var doc = {
+			_id: wordID,
+			word: w,
+			sentenceID: curSentenceID,
+			speakerID: curSpeakerID,
+			eventID: curEventID,
+			categories: uniqueWdoc.categories,
+			timeDiff: time
+		}
+		collection.insert(doc);
+		cb(null, uniqueWdoc);
+	});
+}
+
+function logSentence(wordID, time, cb) {
+	
+	//console.log('logSentence');	
 	common.mongo.collection('sentence_instances', function(err, collection) {
-		// if new sentence, generate ID and insert into sentence_instances
-		if (curSentenceID === 0) {
+		if (sentenceStartF) {
 			curSentenceID = new common.mongo.bson_serializer.ObjectID();
 			
 			var doc = {
 				_id: curSentenceID,
-				wordInstanceIDs: [curWordID],
+				wordInstanceIDs: [wordID],
 				speakerID: curSpeakerID,
 				eventID: curEventID,
-				timeDiff: curTime - common.startTime
+				timeDiff: time
 			}
 			
 			collection.insert(doc);
 		} 
 		// else add curWordID to wordInstanceIDs
 		else {
-			collection.update({_id: curSentenceID}, {$push: {wordInstanceIDs: curWordID}});
+			collection.update({_id: curSentenceID}, {$push: {wordInstanceIDs: wordID}});
 		}
-	});
-
-	
-	common.mongo.collection('unique_words', function(err, collection) { 
-		// upsert unique_words
-		//collection.update({word: w}, {$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, {upsert:true});
-		collection.findAndModify(
-			{word: w}, 
-			[['_id','asc']], 
-			{$push: {wordInstanceIDs: curWordID, sentenceInstanceIDs: curSentenceID}}, 
-			{upsert:true, new:true},
-			function(err, object) {
-			
-				common.mongo.collection('LIWC', function(e, c) {
-					// first check if it's in LIWC (non wildcard)
-					c.findOne({'word':w.toLowerCase()}, function(err, doc) {
-					
-						// add categories
-						var cats = [];
-						if (doc) {
-							collection.update({word: w}, {$set: {categories: doc.cat}}, {upsert:true});	
-							//console.log("NORMAL "+w);
-							cats = doc.cat;		
-						} 
-						else { // if not found, check wildcards
-							common.mongo.collection('LIWC_wildcards', function(e, c) {
-								c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
-									if (wdoc) {
-										//console.log("WILDCARD " + w);
-										collection.update({word: w}, {$set: {categories: wdoc.cat}}, {upsert:true});	
-										cats = wdoc.cat;
-									}
-								});
-							});
-						}
-						
-						// insert into word_instances with cats
-						common.mongo.collection('word_instances', function(err, collection) {
-							// insert into word_instances
-							var doc = {
-								_id: curWordID,
-								word: w,
-								sentenceID: curSentenceID,
-								speakerID: curSpeakerID,
-								eventID: curEventID,
-								categories: cats,
-								timeDiff: curTime - common.startTime
-							}
-							collection.insert(doc);
-							
-							
-							//updateFreq(collection, word);
-						});
-						
-											
-						
-						// process ngrams and send
-						processNGrams(curTime - common.startTime, w, curWordID, curSentenceID, function (ngrams) {
-							sendWord(curTime - common.startTime, object._id, w, false, cats, object.wordInstanceIDs.length, ngrams);	
-							if (punct != ' ' && punct.length == 1) sendWord(curTime - common.startTime + 1, -1, punct, true);	
-							func();
-						});
-					});
-				});
-			});
+		
+		cb(null);
 	});
 }
 
-function processNGrams(t, w, wID, sID, func) {
-	var ngrams = [];
+function processNGrams(l, t, w, wID, sID, uniqueWDoc, ngrams, cb) {
+
+	//console.log('processNGrams');
+	
+	var curGram;
+	if (l == 2) curGram = cur2Gram;
+	else if (l == 3) curGram = cur3Gram;
+	else if (l == 4) curGram = cur4Gram;
 
 	// check for 2grams
-	if (cur2Gram.length == 2) {
-		cur2Gram.shift();
-		cur2Gram.push(w);
-		common.mongo.collection('unique_2grams', function(e2, c2) {
-			c2.findAndModify(
-				{ngram: cur2Gram},
+	if (curGram.length == l) {
+		curGram.shift();
+		curGram.push(w);
+		common.mongo.collection('unique_'+l+'grams', function(e, c) {
+			c.findAndModify(
+				{ngram: curGram},
 				[['_id','asc']], 
 				{$push: {wordInstanceIDs: wID, sentenceInstanceIDs: sID}}, 
 				{upsert:true, new:true},
-				function(err2, object2) {
-					if(object2.wordInstanceIDs.length == minNGramOccurrences) {
-						sendNewNGram(t, object2._id, cur2Gram, object2.wordInstanceIDs);
+				function(err, object) {
+					if(object.wordInstanceIDs.length == minNGramOccurrences) {
+						sendNewNGram(t, object._id, curGram, object.wordInstanceIDs);
 					}
-					if(object2.wordInstanceIDs.length >= minNGramOccurrences) {
-						ngrams.push([object2._id, object2.wordInstanceIDs.length]);
+					if(object.wordInstanceIDs.length >= minNGramOccurrences) {
+						ngrams.push([object._id, object.wordInstanceIDs.length]);
 					}
-					
-					// check for 3grams
-					if (cur3Gram.length == 3) {
-						cur3Gram.shift();
-						cur3Gram.push(w);
-						common.mongo.collection('unique_3grams', function(e3, c3) {
-							c3.findAndModify(
-								{ngram: cur3Gram},
-								[['_id','asc']], 
-								{$push: {wordInstanceIDs: wID, sentenceInstanceIDs: sID}}, 
-								{upsert:true, new:true},
-								function(err3, object3) {
-									if(object3.wordInstanceIDs.length == minNGramOccurrences) {
-										sendNewNGram(t, object3._id, cur3Gram, object3.wordInstanceIDs);
-									}
-									if(object3.wordInstanceIDs.length >= minNGramOccurrences) {
-										ngrams.push([object3._id, object3.wordInstanceIDs.length]);
-									}
-									
-									if (cur4Gram.length == 4) {
-										cur4Gram.shift();
-										cur4Gram.push(w);
-										common.mongo.collection('unique_4grams', function(e4, c4) {
-											c4.findAndModify(
-												{ngram: cur4Gram},
-												[['_id','asc']], 
-												{$push: {wordInstanceIDs: wID, sentenceInstanceIDs: sID}}, 
-												{upsert:true, new:true},
-												function(err4, object4) {
-													if(object4.wordInstanceIDs.length == minNGramOccurrences) {
-														sendNewNGram(t, object4._id, cur4Gram, object4.wordInstanceIDs);
-													}
-													if(object4.wordInstanceIDs.length >= minNGramOccurrences) {
-														ngrams.push([object4._id, object4.wordInstanceIDs.length]);
-													}
-												});
-										});
-									} else {
-										cur4Gram.push(w);
-									}							
-									
-									func(ngrams);
-								});
-						});
-					} else {
-						cur3Gram.push(w);
-						func(ngrams);
-					}									
+					cb(null, uniqueWDoc, ngrams);
 				}
 			);
 		});
 	} else {
-		cur2Gram.push(w);
-		func(ngrams);
+		curGram.push(w);
+		cb(null, uniqueWDoc, ngrams);
 	}
-
 }
+
 
 function sendNewNGram(t, nid, n, nInstances) {
 	var message = {
@@ -309,7 +311,7 @@ function sendNewNGram(t, nid, n, nInstances) {
   common.sendMessage(message, true);
 }
 
-function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
+function sendWord(cb, t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 {
 	var message = {
 		type: "word",
@@ -329,8 +331,26 @@ function sendWord(t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 	}
 
   common.sendMessage(message, true);
+  cb(null);
 }
 
+
+function handleSentenceEnd(timeDiff, cb) {
+		// analyze sentiment
+  sentistrength(curSentence, function(sentiment) {
+		sendSentenceEnd(timeDiff, sentiment, curSentence.split(" ").length-1);
+			
+		sentenceStartF = true;
+		curSentence = "";
+		
+		// reset ngrams at start of sentence
+		cur2Gram = [];
+		cur3Gram = [];
+		cur4Gram = [];
+		
+		cb(null);
+	});
+}
 
 //Function takes a buffer and pulls out any sentences
 
@@ -402,7 +422,6 @@ function parseSentence(text)
 
 function sendSentenceEnd(t, senti, l)
 {
-console.log("SENTENCE END!!");
 	var message = {
 		type: "sentenceEnd",
 		timeDiff: t,
@@ -410,7 +429,7 @@ console.log("SENTENCE END!!");
 		sentiment: senti,
 		length: l
 	};
-  console.log(message);
+	console.log("SENTENCE END!! "+message);
 	common.sendMessage(message, true);
 }
 
