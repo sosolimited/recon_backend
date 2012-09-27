@@ -71,14 +71,33 @@ function parseWords(text, func)
 			var punct = text.substring(ind, ind+1);
 			
 			foundWords.push(word);
-			//console.log("Word: " + word);
-			if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") curSpeakerID = 0;
-			else if (word == "OBAMA" || word == "BIDEN") curSpeakerID = 1;
-			else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") curSpeakerID = 2;
-			else { //only broadcast if not speaker name
-				namedentity(word, sentenceStartF, function(resp) {
-					handleWord(resp, false, 0, punct, func);
-				});
+			console.log("Word: " + word);
+			
+			//JRO: only auto-switching in doc mode
+			if (common.usingDoc)
+			{
+				if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") curSpeakerID = 0;
+				else if (word == "OBAMA" || word == "BIDEN") curSpeakerID = 1;
+				else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") curSpeakerID = 2;
+
+				else { //only broadcast if not speaker name
+					namedentity(word, sentenceStartF, function(resp) {
+						handleWord(resp, false, 0, punct, func);
+					});
+				}
+			}
+			//092712 - JRO using special words as CC to handle speaker switching
+			else
+			{
+				if (word == "SPEAKER_MODERATOR") curSpeakerID = 0;
+				else if (word == "SPEAKER_OBAMA") curSpeakerID = 1;
+				else if (word == "SPEAKER_ROMNEY") curSpeakerID = 2;
+
+				else { //only broadcast if not speaker name
+					namedentity(word, sentenceStartF, function(resp) {
+						handleWord(resp, false, 0, punct, func);
+					});
+				};
 			}
 	
 		}
@@ -452,6 +471,13 @@ function stripTCPDelimiter(text)
 	return text;
 }
 
+//JRO - explict call to change speaker
+function setSpeaker(id)
+{
+	//NOTE: not testing the id
+	curSpeakerID = id;
+}
+
 
 
 //exposing this to for debugging and testing
@@ -460,3 +486,4 @@ exports.parseWords = parseWords;
 exports.stripTCPDelimiter = stripTCPDelimiter;
 exports.handleChars = handleChars;
 exports.sendEndMessage = sendEndMessage;
+exports.setSpeaker = setSpeaker;
