@@ -14,6 +14,7 @@ var sentenceStartF = true;
 var cur2Gram = [];
 var cur3Gram = [];
 var cur4Gram = [];
+var curSentence = "";
 var minNGramOccurrences = 4;
 
 //MongoDB stuff
@@ -21,7 +22,8 @@ var curSentenceID = 0;
 
 //Regular Expressions
 var wordRegExp = new RegExp(/[\s \! \? \; \( \) \[ \] \{ \} \< \> "]|,(?=\W)|[\.\-\&](?=\W)|:(?!\d)/g);
-var sentenceRegExp = new RegExp(/[\.|\?|\!]\s/g);
+//var sentenceRegExp = new RegExp(/[\.|\?|\!]\s/g);
+var sentenceRegExp = new RegExp(/[\.|\?|\!]/);
 var abrevRegExp = new RegExp(/(Mr|Mrs|Ms|Dr|Sr|U\.S|D\.C)$/i);
 
 //Called from outside of 
@@ -40,7 +42,7 @@ function handleChars(newChars)
 	curWordBuffer = parseWords(curWordBuffer)[0];
 	
 	//4. find sentences
-	curSentenceBuffer = parseSentence(curSentenceBuffer)[0];
+	//curSentenceBuffer = parseSentence(curSentenceBuffer)[0];
 	//console.log(curBuffer);
 	
 }
@@ -91,7 +93,8 @@ function parseWords(text, func)
 function handleWord(w, ngram, ngramInst, punct, func)
 {	
 
-console.log("HANDLE WORD "+w);
+	console.log("HANDLE WORD "+w+punct);
+	curSentence += w+" ";
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var timeDiff = new Date().getTime() - common.startTime;
 	
@@ -106,7 +109,7 @@ console.log("HANDLE WORD "+w);
 		  	getCats(w, cb);
 	    },
 	    function(cats, cb) { // log unique word
-		    console.log("cats "+cats);
+		    //console.log("cats "+cats);
 		    logUniqueWord(curWordID, w, cats, cb);
 	    },
 	    function(uniqueWDoc, cb) { // log word instance
@@ -126,7 +129,16 @@ console.log("HANDLE WORD "+w);
 				sendWord(cb, timeDiff, uniqueWDoc._id, w, false, uniqueWDoc.categories, uniqueWDoc.wordInstanceIDs.length, ngrams);	
 			},
 			function(cb) { // send punctuation
-				if (punct != ' ' && punct != '\n' && punct.length == 1) sendWord(cb, timeDiff + 1, -1, punct, true);	
+				if (punct != ' ' && punct != '\n' && punct.length == 1) sendWord(cb, timeDiff + 1, -1, punct, true);
+				else cb(null);	
+			},
+			function(cb) {
+				if (punct.search(sentenceRegExp) != -1) 
+					handleSentenceEnd(timeDiff, cb)
+				else {
+					cb(null);
+					console.log("no sentence"+punct);
+				}
 			}
 	];
 
@@ -145,7 +157,6 @@ function getCats(w, cb) {
 	
 	if (w.search(/\d/) != -1) {
 		cats.push('number');
-		console.log("FOUND NUMBER "+w);
 	}
 
 	common.mongo.collection('LIWC', function(e, c) {
@@ -182,7 +193,7 @@ function logUniqueWord(wordID, w, cats, cb) {
 			{$push: {wordInstanceIDs: wordID, sentenceInstanceIDs: curSentenceID}, $set: {categories: cats}},
 			{upsert:true, new:true},
 			function(err, object) {
-				console.log("object "+object);
+				//console.log("object "+object);
 				cb(null, object);
 		});
 	});
@@ -305,6 +316,23 @@ function sendWord(cb, t, wid, w, punctuationF, wcats, numInstances, ngramsArr)
 }
 
 
+function handleSentenceEnd(timeDiff, cb) {
+		// analyze sentiment
+  sentistrength(curSentence, function(sentiment) {
+		sendSentenceEnd(timeDiff, sentiment, curSentence.split(" ").length-1);
+			
+		sentenceStartF = true;
+		curSentence = "";
+		
+		// reset ngrams at start of sentence
+		cur2Gram = [];
+		cur3Gram = [];
+		cur4Gram = [];
+		
+		cb(null);
+	});
+}
+
 //Function takes a buffer and pulls out any sentences
 
 function parseSentence(text)
@@ -375,7 +403,6 @@ function parseSentence(text)
 
 function sendSentenceEnd(t, senti, l)
 {
-	//console.log("SENTENCE END!!");
 	var message = {
 		type: "sentenceEnd",
 		timeDiff: t,
@@ -383,6 +410,7 @@ function sendSentenceEnd(t, senti, l)
 		sentiment: senti,
 		length: l
 	};
+	console.log("SENTENCE END!! "+message);
 	common.sendMessage(message, true);
 }
 
