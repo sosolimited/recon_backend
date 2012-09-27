@@ -39,6 +39,9 @@ module.exports = {
 	
 	mongo : mongo,
  	engine : engine,
- 	async : require('async')
+ 	async : require('async'),
+ 	
+ 	// is there a live streaming debate
+ 	live : false
 };
 
