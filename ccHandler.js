@@ -14,7 +14,6 @@ var sentenceStartF = true;
 var cur2Gram = [];
 var cur3Gram = [];
 var cur4Gram = [];
-var curSentence = "";
 var minNGramOccurrences = 4;
 
 //MongoDB stuff
@@ -46,20 +45,16 @@ function handleChars(newChars)
 	curSentenceBuffer += newChars;
 	
 	//3. find the words in the buffer
-	curWordBuffer = parseWords(curWordBuffer)[0];
+	curWordBuffer = parseWords(curWordBuffer);
 	
 }
 
 //Function takes a buffer and pulls out any words
-function parseWords(text, func)
+function parseWords(text)
 {
 
 	//return elements
-	var foundWords = [];
 	var returnBuf = "";
-
-	//PEND: maybe it just has the *** on occasion?
-	text = text.replace("***", '');
 
 	//split input string with RegExo
 	var tokens = text.match(spaceRegEx);
@@ -72,7 +67,6 @@ function parseWords(text, func)
 		{
 			var tok = tokens[i];
 			console.log("tok "+tok);
-			curSentence += tok+" ";
 			
 			substrL += tokens[i].length+1;
 			
@@ -95,6 +89,7 @@ function parseWords(text, func)
 			}
 		
 			// pull any abbreviations
+			// PEND: broken 
 			var abbrevWord = tok.match(abbrevRegEx);
 			if (abbrevWord && !word) {
 				console.log('abbrev');
@@ -114,7 +109,6 @@ function parseWords(text, func)
 				sentenceEnd = true;
 			}
 		
-			var speaker = 0;
 			var speakerSwitch = false;
 		
 			console.log("Word: " + word);
@@ -142,7 +136,7 @@ function parseWords(text, func)
 	}
 
 	//return both the current buffer and the found words
-	return [returnBuf, foundWords];
+	return returnBuf;
 
 }
 
@@ -150,7 +144,6 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 {	
 
 	console.log("HANDLE WORD "+leadPunct+" "+w+" "+endPunct+" speaker "+speaker);
-	curSentence += w+" ";
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var timeDiff = new Date().getTime() - common.startTime;
 	
@@ -386,11 +379,11 @@ function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 
 function handleSentenceEnd(timeDiff, speaker, cb) {
 		// analyze sentiment
-  sentistrength(curSentence, function(sentiment) {
-		sendSentenceEnd(timeDiff, speaker, sentiment, curSentence.split(" ").length-1);
+  sentistrength(curSentenceBuffer, function(sentiment) {
+		sendSentenceEnd(timeDiff, speaker, sentiment, curSentenceBuffer.split(" ").length-1);
 			
 		sentenceStartF = true;
-		curSentence = "";
+		curSentenceBuffer = "";
 		
 		// reset ngrams at start of sentence
 		cur2Gram = [];

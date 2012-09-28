@@ -22,7 +22,8 @@ function sendMessage(msg, log) {
 		  engine.clients[key].send(JSON.stringify(msg));
 	  });
 	  
-	  console.log(msg);
+	  //for printing all messages
+	  //console.log(msg);
 	}
 
   // log msg
