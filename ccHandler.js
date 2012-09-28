@@ -60,10 +60,11 @@ function parseWords(text)
 	var tokens = text.match(spaceRegEx);
 	var substrL = 0;
 
-	for (i in tokens)
+	for (i in tokens) //JRO - hack to only process one token at a time
 	{
 		//If the element isn't the last in an array, it is a new word
-		if ((i<tokens.length - 1) && tokens[i] !== "")
+		//if ((i<tokens.length - 1) && tokens[i] !== "")
+		if ((i == 0) && (i<tokens.length - 1) && tokens[i] !== "") //JRO - hack to only process one token at a time
 		{
 			var tok = tokens[i];
 			console.log("");
