@@ -139,6 +139,7 @@ function parseWords(text)
 					speakerSwitch = true;
 				}
 			}
+			
 			//words for live uploading
 			else if (word)
 			{
@@ -183,47 +184,61 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 	var timeDiff = new Date().getTime() - common.startTime;
 	
 	// if new sentence, generate ID and insert into sentence_instances
-
-
+	
 	var funcs = [
 	    function(cb) { // log sentence
 	    	logSentence(speaker, curWordID, timeDiff, cb);
 	    },
+	    
 	    function(cb) { // look up categories
 		  	getCats(w, cb);
 	    },
+	    
 	    function(cats, cb) { // log unique word
 		    //console.log("cats "+cats);
 		    logUniqueWord(curWordID, w, cats, cb);
 	    },
+	    
 	    function(uniqueWDoc, cb) { // log word instance
 		    //console.log("uniqueWDoc "+uniqueWDoc);
 	   		logWordInstance(speaker, curWordID, uniqueWDoc, timeDiff, cb);
 	   	},
+	    
 	    function(uniqueWDoc, cb) { // process 4 grams
 				processNGrams(4, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, [], cb);
 			},
+	    
 	    function(uniqueWDoc, ngrams, cb) { // process 3 grams
 				processNGrams(3, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
 			},
+	    
 	    function(uniqueWDoc, ngrams, cb) { // process 2 grams
 				processNGrams(2, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
 			},
+			
 			function(uniqueWDoc, ngrams, cb) { // send punctuation
+				//console.log('Before:'+uniqueWDoc.word);
 				if (leadPunct) {
-					if (leadPunct != ' ' && leadPunct != '\n' && leadPunct.length == 1) 
-						sendWord(cb, timeDiff - 1, speaker, -1, leadPunct, true);
+					//console.log("lead punct");
+					if (leadPunct != ' ' && leadPunct != '\n') // && leadPunct.length == 1) length is not working well here
+						sendWord(cb, timeDiff - 1, speaker, uniqueWDoc, leadPunct, true, ngrams); //JRO - arguments were missing
 					else cb(null, uniqueWDoc, ngrams);	
-				} else cb(null, uniqueWDoc, ngrams);
+					
+				} 
+				else cb(null, uniqueWDoc, ngrams);
 			},
+			
 			function(uniqueWDoc, ngrams, cb) { // send word
+				//console.log('After:'+uniqueWDoc.word);
 				if (!speakerSwitch)
+					//console.log('About to send:'+w+' uniqueWDoc.word:'+uniqueWDoc.word);
 					sendWord(cb, timeDiff, speaker, uniqueWDoc, uniqueWDoc.word, false, ngrams);	
 			},
+			
 			function(uniqueWDoc, ngrams, cb) { // send punctuation
 				if (endPunct) {
-					if (endPunct != ' ' && endPunct != '\n' && endPunct.length == 1) 
-						sendWord(cb, timeDiff + 1, speaker, -1, endPunct, true);
+					if (endPunct != ' ' && endPunct != '\n') //  && endPunct.length == 1) length is not working here
+						sendWord(cb, timeDiff + 1, speaker, uniqueWDoc, endPunct, true, ngrams); //JRO - arguments were missing
 					else cb(null, uniqueWDoc, ngrams);	
 				} 
 				else cb(null, uniqueWDoc, ngrams);
@@ -282,7 +297,7 @@ function getCats(w, cb) {
 
 function logUniqueWord(wordID, w, cats, cb) {
 	
-	//console.log('logUniqueWord');
+	//console.log('logUniqueWord:' + w);
 	common.mongo.collection('unique_words'+common.db_suffix, function(err, collection) { 
 		// upsert unique_words
 		collection.findAndModify(
@@ -392,6 +407,7 @@ function sendNewNGram(t, nid, n, nInstances) {
 
 function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 {
+	//console.log("send word: "+w+" "+punctuationF);
 	var message = {
 		type: "word",
 		timeDiff: t,
@@ -401,6 +417,7 @@ function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 		punctuationFlag: punctuationF
 	};
 	
+	//console.log("Flag: "+punctuationF);
 	if (!punctuationF) {
 		message['sentenceStartFlag'] = sentenceStartF;
 		message['cats'] = uniqueWDoc.categories;
