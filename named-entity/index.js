@@ -10,7 +10,6 @@ var java = spawn("java", [ "-mx500m", "-cp",
 	"-port", port,
 	"-loadClassifier", __dirname + "/classifiers/" + classifier ]);
 
-
 module.exports = function(msg, start, done) {
 	
 	var socket = net.connect(port, function() {

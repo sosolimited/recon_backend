@@ -22,7 +22,7 @@ function sendMessage(msg, log) {
 	  });
 	  
 	  //for printing all messages
-	  //console.log(msg);
+	  console.log(msg);
 	}
 
   // log msg

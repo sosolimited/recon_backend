@@ -257,7 +257,7 @@ function loadDoc(docName, delay) {
 }
 
 function loadHistory() {
-		common.mongo.collection('messages', function(err, collection) {
+		common.mongo.collection('messages'+common.db_suffix, function(err, collection) {
 		collection.find(function(err, cursor) {
 			cursor.each(function(err, msg) { 
 				console.log("SEND "+msg);
