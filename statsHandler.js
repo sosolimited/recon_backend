@@ -98,9 +98,4 @@ function addVal(msg, modifier, name, val, remainder) {
 }
 
 
-function genRand100() {
-	return Math.floor(Math.random()*100);
-}
-
-
 exports.sendStats = sendStats;
