@@ -198,6 +198,9 @@ function start() {
 	//  empty test dbs
 	for (var i=0; i<3; i++) {
 		// clear out dbs
+		common.mongo.collection("messages"+i+"test", function(err, collection) {9
+			collection.remove(function(err, result) {});
+		});
 		common.mongo.collection("word_instances_d"+i+"test", function(err, collection) {
 			collection.remove(function(err, result) {});
 		});

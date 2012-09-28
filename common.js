@@ -4,9 +4,8 @@ var config = require(__dirname + "/config.json");
 var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
 var engine = require("engine.io");
-var mongo = new Db(config.mongo.db, new MongoServer("127.0.0.1", 27017, {strict:true})); //local setup
-//var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, 30957, {strict:true})); //new port from mongolab
-var engine =  engine.listen(8081, "0.0.0.0");
+var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true})); //new port from mongolab
+var engine =  engine.listen(8081, "127.0.0.1");
 var db_suffix = '_d0test';
 
 
