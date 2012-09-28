@@ -283,11 +283,12 @@ function getCats(w, cb) {
 			//TODO: This needs to be fixed, currently not working
 			else { // if not found, check wildcards
 				common.mongo.collection('LIWC_wildcards', function(e, c) {
-					c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
+					c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) == 0" }, function(err, wdoc) {
 						if (wdoc) {
-							//console.log("WILDCARD " + w);
+							console.log("WILDCARD:" + w + " CAT:" + wdoc.cat + " ORIGINAL:" + wdoc.word);
 							cb(null, cats.concat(wdoc.cat));
-						} else cb(null, cats);
+						} 
+						else cb(null, cats);
 					});
 				});
 			}
