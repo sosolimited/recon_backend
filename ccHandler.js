@@ -444,13 +444,31 @@ function stripTCPDelimiter(text)
 {		
 	//var re = '/\*{3}./';
 	//text = text.replace(re, '');
+	
+	//JRO 092712 - using new line delimiter
+	//also not just looking at the end of the string since messages get concatenated
 
+/*
 	text = text.replace("***\0", '');
 	//PEND: fix this
 	//for some reason, it's missing the replace every once in a while, but doing it twice helps 
 	text = text.replace("***\0", '');
+*/
+
+	//JRO 092712 - using new line delimiter
+	text = text.replace("\n", '');
+	//PEND: fix this
+	//for some reason, it's missing the replace every once in a while, but doing it twice helps 
+	text = text.replace("\n", '');
 
 	return text;
+}
+
+//JRO - explict call to change speaker
+function setSpeaker(id)
+{
+	//NOTE: not testing the id
+	curSpeakerID = id;
 }
 
 
@@ -461,3 +479,4 @@ exports.parseWords = parseWords;
 exports.stripTCPDelimiter = stripTCPDelimiter;
 exports.handleChars = handleChars;
 exports.sendEndMessage = sendEndMessage;
+exports.setSpeaker = setSpeaker;

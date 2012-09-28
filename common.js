@@ -8,6 +8,8 @@ var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, 27017, {s
 var engine =  engine.listen(8081, "0.0.0.0");
 var db_suffix = '_d0test';
 
+var usingDoc = false; //JRO
+
 function sendMessage(msg, log) {
 
 	if (engine.clients) {

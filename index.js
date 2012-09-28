@@ -1,14 +1,53 @@
-//for testing
+ //for testing
 var common = require('./common.js');
 var cc = require('./ccHandler.js');
 var stats = require('./statsHandler.js');
 
 
 var tcpServer;
+var ccSocket; //JRO
 var doc;
 var ind, nextInd;
 var intervalID;
 
+//JRO - Listening to terminal for disconnect commands
+var stdin = process.openStdin();
+
+//If we want to write a restart script it can go here
+stdin.on('data', function(chunk) { 
+	
+	//trim the input
+	var msg = chunk.toString().replace('\n', '');
+	console.log("Input message: " + msg + "<"); 
+	
+	if (msg == 'close') 
+	{
+		if (ccSocket) {
+			ccSocket.write('close\n', 'utf8', function() {
+				console.log('closing existing CC socket');
+			});
+		}
+	}
+	
+	else if (msg = 'test')
+	{
+		if (ccSocket) {
+			ccSocket.write('test\n', 'utf8', function() {
+				console.log('Testing CC socket ' + ccSocket.bytesWritten );
+			});
+		}
+	}
+	
+	
+});
+
+
+//JRO shutdown code - listen to Ctrl-C events
+process.on( 'SIGINT', function() {
+  console.log( "\nRecon Backend shutting down from  SIGINT (Crtl-C)" );
+  // some other closing procedures go here
+  process.exit();
+});
 
 
 function start() {
@@ -63,60 +102,120 @@ function start() {
 	});
 	
 	tcpServer.on('connection', function(sock) {
+	
+		//Maintain a pointer to this
+		ccSocket = sock;
+		
 		//We have a connection - a socket object is assigned to the connection automatically
 		console.log('CONNECTED: ' + sock.remoteAddress + ':' + sock.remotePort);
 						
 		//Add a 'data' event handler to this instance of socket
 		sock.on('data', function(data){
 			
+			//JRO - new Data Methods
 			data = String(data);
+			//console.log("data: "+data);
 			
-			console.log("data: "+data);
+			var msg = cc.stripTCPDelimiter(data);	
+			//console.log(msg);		
 			
-			//process.stdout.write(cc.stripTCPDelimiter(data));
+			cc.handleChars(msg);
 			
-			//jroth
-			var newChars = cc.stripTCPDelimiter(data);
-			cc.handleChars(newChars);
 			
-			//data = String(data).substring(0, data.length - 4);
-			//console.log('DATA' + sock.remoteAddress + ': ' + data);
-			//process.stdout.write(data);
+			//092712 - no longer using message types since TCP gets concatenated
+			/*
+			var msgData = parseIncoming(msg);
+		
+			if (msgData.type == 'c')
+			{
+				//handle the CC
+				console.log(msgData.body);
+				//cc.handleChars(msgData.body);
+			}
+			else if (msgData.type == 's')
+			{
+				//speaker switching
+				//console.log("Speaker Switch: " + msgData.body);
+				//092712 - this method has been deprecated we now handle speaker switching with special words
+				//cc.setSpeaker(msgData.body);
+			}
+			*/
 			
-			//Write the data back to the socket, the client will receive it as data from the server
-			//sock.write('You said "' + data + '"');
 		});
 		
 		//Add a 'close' event handler to this instance of socket
 		sock.on('close', function(data){
 			console.log('CLOSED: ' + sock.remoteAddress + ' ' + sock.remotePort);
 		});
-	
+		
+		sock.on('exit', function()
+		{
+			console.log("here");
+			sock.close();
+		});
+		
 	});
 	
+	tcpServer.on('exit', function() {
+		console.log("server exit");
+		tcpServer.close();
+	});
+	
+	tcpServer.on('error', function() {
+		console.log("server error");
+		tcpServer.close();
+	});
+	
+	//JRO shutdown code
+	process.on('exit', function () {
+		
+		console.log('Got "exit" event from REPL!');
+		//now how do we close the server and all sockets?
+		console.log('Server connections:' + tcpServer.connections);
+		
+		if (ccSocket) {
+			ccSocket.write('close\n', 'utf8', function() {
+				console.log('socket disconnect sent');
+			});
+			ccSocket.destroy();
+		}
+		
+		tcpServer.close(function () {
+			console.log("Closing server fron exit()");
+		});
+		
+		console.log('Server connections:' + tcpServer.connections);
+		process.exit();
+		
+	});
+
 	// mongodb
 	common.mongo.open(function(err, p_client) {
 	
-		//  empty test dbs
-		for (var i=0; i<3; i++) {
-			// clear out dbs
-			common.mongo.collection("word_instances_d"+i+"test", function(err, collection) {
+	//092012 JRO testing
+	//setInterval(stats.sendStats, 60000);
+
+	//  empty test dbs
+	for (var i=0; i<3; i++) {
+		// clear out dbs
+		common.mongo.collection("word_instances_d"+i+"test", function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
+		common.mongo.collection("sentence_instances_d"+i+"test", function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
+		common.mongo.collection("unique_words_d"+i+"test", function(err, collection) {9
+			collection.remove(function(err, result) {});
+		});
+		
+		for (var j=2; j<5; j++) {
+			common.mongo.collection("unique_"+j+"grams_d"+i+"test", function(err, collection) {
 				collection.remove(function(err, result) {});
 			});
-			common.mongo.collection("sentence_instances_d"+i+"test", function(err, collection) {
-				collection.remove(function(err, result) {});
-			});
-			common.mongo.collection("unique_words_d"+i+"test", function(err, collection) {9
-				collection.remove(function(err, result) {});
-			});
-			
-			for (var j=2; j<5; j++) {
-				common.mongo.collection("unique_"+j+"grams_d"+i+"test", function(err, collection) {
-					collection.remove(function(err, result) {});
-				});
-			}
 		}
-		setInterval(stats.sendStats, 5000);
+	}
+
+		setInterval(stats.sendStats, 5000);	
 		
 	});
 	
@@ -131,6 +230,8 @@ start();
 function loadDoc(docName, delay) {
 
 	console.log("d "+delay+" n "+docName);
+	
+	common.usingDoc = true; //JRO
 	
 	// reset start date
 	common.startTime = new Date().getTime();
@@ -178,11 +279,35 @@ function sendCharsFromDoc() {
 	
 }
 
+//JRO - no longer useful
+/*
+function parseIncoming(message)
+{
+	if (message.length > 2)
+	{
+		var msgType = message.slice(0,1);
+		var msgBody = message.slice(2,message.length);
+	
+		//console.log(msgType + " " + msgBody);
+		return {type:msgType, body:msgBody};
+	}
+	else return {type:'unformatted', body:message};
+}
+*/
 
+/*
+//JRO - deprecated method?
 function receiveChars(response, request)
 {
 	var url_parts = url.parse(request.url, true);
-	var newChars = url_parts.query.chars;
+	var msg = url_parts.query.chars;
 	
-	cc.handleChars(newChars);
+	var data = parseIncoming(msg);
+	
+	if (data.type == 'c')
+	{
+		//handle the CC
+		//cc.handleChars(data.body);
+	}
 }
+*/
