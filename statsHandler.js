@@ -4,31 +4,33 @@ var common = require('./common.js');
 function sendStats() {
 
 	common.mongo.collection('word_instances', function(err, collection) {
-		collection.find().count(function(err, total) {
-
-			var message = {
-				type: "stats",
-				calcs: [["posemo", "+posemo"], //use cat names if they correspond!
-								["negemo", "+negemo"], 
-								["anger", "+anger"], 
-								["i", "+i"], 
-								["we", "+we"], 
-								["complexity", "+excl+tentat+negate-incl+discrep"],
-								["status", "+we-i"],
-								["depression", "+i+physical+negemo-posemo"],
-								["formality", "-i+article+sixltr-present-discrep"],
-								["honesty", "+self+you+heshe+they+ipron+excl-negemo"]],
-				tempVal: 0,
-				total: total,
-				timeDiff: new Date().getTime() - common.startTime
-			};
+		collection.find({speakerID:1}).count(function(err, total1) {
+			collection.find({speakerID:2}).count(function(err, total2) {
+	
+				var message = {
+					type: "stats",
+					calcs: [["funct", "+funct"], //for testing
+									["posemo", "+posemo"], //use cat names if they correspond!
+									["negemo", "+negemo"], 
+									["anger", "+anger"], 
+									["i", "+i"], 
+									["we", "+we"], 
+									["complexity", "+excl+tentat+negate-incl+discrep"],
+									["status", "+we-i"],
+									["depression", "+i+physical+negemo-posemo"],
+									["formality", "-i+article+sixltr-present-discrep"],
+									["honesty", "+self+you+heshe+they+ipron+excl-negemo"]],
+					tempVal: [0,0],
+					total: [total1, total2],
+					timeDiff: new Date().getTime() - common.startTime
+				};
 			
-			calcCats(message);
-
+				calcCats(message);
+			
+			});
+			
 		});
 	});
-		
-
 }
 
 function calcCats(msg) {
@@ -58,25 +60,33 @@ function calcCats(msg) {
 		} else {
 	
 			common.mongo.collection('word_instances', function(err, collection) {
-			
-				collection.find({categories:catName}).count(function(err, val) {
+
+				collection.find({categories:catName, speakerID:1}).count(function(err, val1) {
+					collection.find({categories:catName, speakerID:2}).count(function(err, val2) {
 	
-					addVal(msg, traitModifier, traitName, val, remainder);
+						addVal(msg, traitModifier, traitName, [val1, val2], remainder);
+					});
 					
 				});
 				
 				
 			});
+			
 		}
 	}
 }
 
 function addVal(msg, modifier, name, val, remainder) {
-	msg['tempVal'] = (modifier === '+') ? msg['tempVal']+val : msg['tempVal']-val;
+	//console.log("addVal "+modifier+" "+name+" "+val+" "+remainder);
+
+	if (modifier === '-') val = [-1*val[0], -1*val[1]];
+
+	msg['tempVal'] = [msg['tempVal'][0]+val[0], msg['tempVal'][1]+val[1]];
 	
 	if (remainder.length === 0) {
-		msg[name] = msg['tempVal']/msg['total'];
-		msg['tempVal'] = 0;
+		msg[name] = [(msg['total'][0] == 0) ? 0 : msg['tempVal'][0]/msg['total'][0],
+								 (msg['total'][1] == 0) ? 0 : msg['tempVal'][1]/msg['total'][1]];
+		msg['tempVal'] = [0,0];
 		msg['calcs'].shift();
 	}
 	else {
