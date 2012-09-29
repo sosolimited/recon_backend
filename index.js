@@ -192,31 +192,43 @@ function start() {
 	// mongodb
 	common.mongo.open(function(err, p_client) {
 	
-	//092012 JRO testing
-	//setInterval(stats.sendStats, 60000);
-
-	//  empty test dbs
-	for (var i=0; i<3; i++) {
-		// clear out dbs
-		common.mongo.collection("messages"+i+"test", function(err, collection) {9
-			collection.remove(function(err, result) {});
-		});
-		common.mongo.collection("word_instances_d"+i+"test", function(err, collection) {
-			collection.remove(function(err, result) {});
-		});
-		common.mongo.collection("sentence_instances_d"+i+"test", function(err, collection) {
-			collection.remove(function(err, result) {});
-		});
-		common.mongo.collection("unique_words_d"+i+"test", function(err, collection) {9
-			collection.remove(function(err, result) {});
-		});
+		common.initialized = true;
 		
-		for (var j=2; j<5; j++) {
-			common.mongo.collection("unique_"+j+"grams_d"+i+"test", function(err, collection) {
+		// authenticate
+		if (common.mongouser) {
+		  common.mongo.authenticate(common.mongouser, common.mongopass, function(err, p_client) { 
+		  }); 
+		}
+		
+	  common.mongo.collection('LIWC', function(err, collection) {
+	    collection.count(function(err, count) {
+		    console.log("There are " + count + " records in the test collection. Here they are:"+err);
+		  });
+
+	  });
+	
+		//  empty test dbs
+		for (var i=0; i<3; i++) {
+			// clear out dbs
+			common.mongo.collection("messages"+i+"test", function(err, collection) {9
 				collection.remove(function(err, result) {});
 			});
+			common.mongo.collection("word_instances_d"+i+"test", function(err, collection) {
+				collection.remove(function(err, result) {});
+			});
+			common.mongo.collection("sentence_instances_d"+i+"test", function(err, collection) {
+				collection.remove(function(err, result) {});
+			});
+			common.mongo.collection("unique_words_d"+i+"test", function(err, collection) {9
+				collection.remove(function(err, result) {});
+			});
+			
+			for (var j=2; j<5; j++) {
+				common.mongo.collection("unique_"+j+"grams_d"+i+"test", function(err, collection) {
+					collection.remove(function(err, result) {});
+				});
+			}
 		}
-	}
 
 		setInterval(stats.sendStats, 5000);	
 		
