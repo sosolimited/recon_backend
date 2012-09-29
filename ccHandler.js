@@ -64,10 +64,11 @@ function parseWords(text)
 	var tokens = text.match(spaceRegEx);
 	var substrL = 0;
 
-	for (i in tokens)
+	for (i in tokens) //JRO - hack to only process one token at a time
 	{
 		//If the element isn't the last in an array, it is a new word
-		if ((i<tokens.length - 1) && tokens[i] !== "")
+		//if ((i<tokens.length - 1) && tokens[i] !== "")
+		if ((i == 0) && (i<tokens.length - 1) && tokens[i] !== "") //JRO - hack to only process one token at a time
 		{
 			var tok = tokens[i];
 			//console.log("tok "+tok);
@@ -238,11 +239,12 @@ function getCats(w, cb) {
 			} 
 			else { // if not found, check wildcards
 				common.mongo.collection('LIWC_wildcards', function(e, c) {
-					c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) != -1" }, function(err, wdoc) {
+					c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) == 0" }, function(err, wdoc) {
 						if (wdoc) {
-							//console.log("WILDCARD " + w);
+							console.log("WILDCARD:" + w + " CAT:" + wdoc.cat + " ORIGINAL:" + wdoc.word);
 							cb(null, cats.concat(wdoc.cat));
-						} else cb(null, cats);
+						} 
+						else cb(null, cats);
 					});
 				});
 			}
