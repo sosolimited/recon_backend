@@ -26,26 +26,30 @@ var curSentenceID = 0;
 //var abrevRegExp = new RegExp(/(Mr|Mrs|Ms|Dr|Sr|U\.S|D\.C)$/i);
 
 var spaceRegEx = new RegExp(/\S{1,}/g);
-var leadPunctRegEx = new RegExp(/^[\"|\'|>|<|\-|\+|\[|\{|$]{1,}/); //JRO edit
+var leadPunctRegEx = new RegExp(/^[\"|\'|>|-|+|\[|\{|$]{1,}/);
 var numberRegEx = new RegExp(/\d{1,}.{1,}\d{1,}/);
-var abbrevRegEx = new RegExp(/\w{1,}[\'|\-]\w{1,}/); //JRO edit
+var abbrevRegEx = new RegExp(/\w{1,}.{1,}\w{1,}/);
 var wordRegEx = new RegExp(/\w{1,}/);
 var sentenceEndRegEx = new RegExp(/[\.|\?|\!]/);
 
 //Called from outside of 
 function handleChars(newChars)
 {
-	//console.log(newChars);
-	//process.stdout.write(newChars);
 
-	//1. add chars to current word
-	curWordBuffer += newChars;
+	if (common.initialized) {
 
-	//2. add chars to current sentence
-	curSentenceBuffer += newChars;
+		//console.log(newChars);
+		//process.stdout.write(newChars);
 	
-	//3. find the words in the buffer
-	curWordBuffer = parseWords(curWordBuffer);
+		//1. add chars to current word
+		curWordBuffer += newChars;
+	
+		//2. add chars to current sentence
+		curSentenceBuffer += newChars;
+		
+		//3. find the words in the buffer
+		curWordBuffer = parseWords(curWordBuffer);
+	}
 	
 }
 
@@ -67,20 +71,16 @@ function parseWords(text)
 		if ((i == 0) && (i<tokens.length - 1) && tokens[i] !== "") //JRO - hack to only process one token at a time
 		{
 			var tok = tokens[i];
-			console.log("");
-			console.log("tok:"+tok);
+			//console.log("tok "+tok);
 			
 			substrL += tokens[i].length+1;
 			
 			// strip any leading punctuation
 			var leadPunct = tok.match(leadPunctRegEx);
 			if (leadPunct) {
-				//NOTE: substring was not working correctly ... might actually be length that was off
-				//using replace instead
-				tok = tok.replace(leadPunct, "");
-				console.log('lead p ' + leadPunct);
+				tok = tok.substring(leadPunct.length);
+				//console.log('lead p');
 			}
-			//console.log("tok1:"+tok);
 			
 			// pull any numbers
 			
@@ -89,82 +89,50 @@ function parseWords(text)
 			
 			var numWord = tok.match(numberRegEx);
 			if (numWord) {
-				console.log('number');
+				//console.log('number');
 				word = numWord;
 			}
-			//console.log("tok2:"+tok);
 		
 			// pull any abbreviations
 			// PEND: broken 
 			var abbrevWord = tok.match(abbrevRegEx);
 			if (abbrevWord && !word) {
-				console.log('abbrev');
+				//console.log('abbrev');
 				word = abbrevWord;
 			}
-			//console.log("tok3:"+tok);
 			
 			// pull out word
 			var plainWord = tok.match(wordRegEx);
 			if (plainWord && !word) {
 				word = plainWord;
 			}
-			//console.log("tok4:"+tok);
 			
-			if (word) console.log("Word: " + word);
-			
-			//look for final punctutation, the leftovers
 			var endPunct = tok.replace(word, "");
-			if (endPunct) console.log('punct ' + endPunct);
 			
 			// check if sentence end
 			if (endPunct.search(sentenceEndRegEx) != -1) {
 				sentenceEnd = true;
-				console.log('END SENTENCE');
 			}
 		
 			var speakerSwitch = false;
 		
-			//spealer switching handled with special words
-			if (word && common.usingDoc)
-			{			
-				if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") {
-					curSpeaker = 0;
-					speakerSwitch = true;
-				}
-				else if (word == "OBAMA" || word == "BIDEN") {
-					curSpeaker = 1;
-					speakerSwitch = true;
-				}
-				else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") {
-					curSpeaker = 2;
-					speakerSwitch = true;
-				}
+			//console.log("Word: " + word);
+			if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") {
+				curSpeaker = 0;
+				speakerSwitch = true;
 			}
-			
-			//words for live uploading
-			else if (word)
-			{
-				if (word == "SPEAKER_MODERATOR") {
-					curSpeaker = 0;
-					speakerSwitch = true;
-				}
-				else if (word == "SPEAKER_OBAMA") {
-					curSpeaker = 1;
-					speakerSwitch = true;
-				}
-				else if (word == "SPEAKER_ROMNEY") {
-					curSpeaker = 2;
-					speakerSwitch = true;
-				}
+			else if (word == "OBAMA" || word == "BIDEN") {
+				curSpeaker = 1;
+				speakerSwitch = true;
 			}
-			
-			
+			else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") {
+				curSpeaker = 2;
+				speakerSwitch = true;
+			}
+
 			namedentity(word, sentenceStartF, function(resp) {
 				handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
 			});
-			
-			
-			
 		}
 		//Otherwise this should be returned as part of the buffer
 		else {
@@ -185,61 +153,50 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 	var timeDiff = new Date().getTime() - common.startTime;
 	
 	// if new sentence, generate ID and insert into sentence_instances
-	
+
+
 	var funcs = [
 	    function(cb) { // log sentence
 	    	logSentence(speaker, curWordID, timeDiff, cb);
 	    },
-	    
 	    function(cb) { // look up categories
 		  	getCats(w, cb);
+	    	console.log("1");
 	    },
-	    
 	    function(cats, cb) { // log unique word
 		    //console.log("cats "+cats);
 		    logUniqueWord(curWordID, w, cats, cb);
+	    	console.log("2");
 	    },
-	    
 	    function(uniqueWDoc, cb) { // log word instance
 		    //console.log("uniqueWDoc "+uniqueWDoc);
 	   		logWordInstance(speaker, curWordID, uniqueWDoc, timeDiff, cb);
+	    	console.log("3");
 	   	},
-	    
 	    function(uniqueWDoc, cb) { // process 4 grams
 				processNGrams(4, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, [], cb);
 			},
-	    
 	    function(uniqueWDoc, ngrams, cb) { // process 3 grams
 				processNGrams(3, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
 			},
-	    
 	    function(uniqueWDoc, ngrams, cb) { // process 2 grams
 				processNGrams(2, timeDiff, speaker, curWordID, curSentenceID, uniqueWDoc, ngrams, cb);
 			},
-			
 			function(uniqueWDoc, ngrams, cb) { // send punctuation
-				//console.log('Before:'+uniqueWDoc.word);
 				if (leadPunct) {
-					//console.log("lead punct");
-					if (leadPunct != ' ' && leadPunct != '\n') // && leadPunct.length == 1) length is not working well here
-						sendWord(cb, timeDiff - 1, speaker, uniqueWDoc, leadPunct, true, ngrams); //JRO - arguments were missing
+					if (leadPunct != ' ' && leadPunct != '\n' && leadPunct.length == 1) 
+						sendWord(cb, timeDiff - 1, speaker, -1, leadPunct, true);
 					else cb(null, uniqueWDoc, ngrams);	
-					
-				} 
-				else cb(null, uniqueWDoc, ngrams);
+				} else cb(null, uniqueWDoc, ngrams);
 			},
-			
 			function(uniqueWDoc, ngrams, cb) { // send word
-				//console.log('After:'+uniqueWDoc.word);
 				if (!speakerSwitch)
-					//console.log('About to send:'+w+' uniqueWDoc.word:'+uniqueWDoc.word);
 					sendWord(cb, timeDiff, speaker, uniqueWDoc, uniqueWDoc.word, false, ngrams);	
 			},
-			
 			function(uniqueWDoc, ngrams, cb) { // send punctuation
 				if (endPunct) {
-					if (endPunct != ' ' && endPunct != '\n') //  && endPunct.length == 1) length is not working here
-						sendWord(cb, timeDiff + 1, speaker, uniqueWDoc, endPunct, true, ngrams); //JRO - arguments were missing
+					if (endPunct != ' ' && endPunct != '\n' && endPunct.length == 1) 
+						sendWord(cb, timeDiff + 1, speaker, -1, endPunct, true);
 					else cb(null, uniqueWDoc, ngrams);	
 				} 
 				else cb(null, uniqueWDoc, ngrams);
@@ -272,16 +229,14 @@ function getCats(w, cb) {
 	}
 
 	common.mongo.collection('LIWC', function(e, c) {
+
 		// first check if it's in LIWC (non wildcard)
 		c.findOne({'word':w.toLowerCase()}, function(err, doc) {
-		
 			// add categories
 			if (doc) {
 				//console.log("NORMAL "+w);
 				cb(null, cats.concat(doc.cat));
 			} 
-			
-			//TODO: This needs to be fixed, currently not working
 			else { // if not found, check wildcards
 				common.mongo.collection('LIWC_wildcards', function(e, c) {
 					c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) == 0" }, function(err, wdoc) {
@@ -298,9 +253,12 @@ function getCats(w, cb) {
 }
 
 function logUniqueWord(wordID, w, cats, cb) {
-	
-	//console.log('logUniqueWord:' + w);
+
+
+
+	console.log('logUniqueWord '+ common.db_suffix);
 	common.mongo.collection('unique_words'+common.db_suffix, function(err, collection) { 
+		console.log("err "+err);
 		// upsert unique_words
 		collection.findAndModify(
 			{word: w}, 
@@ -308,7 +266,7 @@ function logUniqueWord(wordID, w, cats, cb) {
 			{$push: {wordInstanceIDs: wordID, sentenceInstanceIDs: curSentenceID}, $set: {categories: cats}},
 			{upsert:true, new:true},
 			function(err, object) {
-				//console.log("object "+object);
+				console.log("object "+object+" err "+err);
 				cb(null, object);
 		});
 	});
@@ -409,7 +367,6 @@ function sendNewNGram(t, nid, n, nInstances) {
 
 function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 {
-	//console.log("send word: "+w+" "+punctuationF);
 	var message = {
 		type: "word",
 		timeDiff: t,
@@ -419,7 +376,6 @@ function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 		punctuationFlag: punctuationF
 	};
 	
-	//console.log("Flag: "+punctuationF);
 	if (!punctuationF) {
 		message['sentenceStartFlag'] = sentenceStartF;
 		message['cats'] = uniqueWDoc.categories;

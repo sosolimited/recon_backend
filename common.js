@@ -3,10 +3,22 @@ var config = require(__dirname + "/config.json");
 
 var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
+var ReplSetServers = require('mongodb').ReplSetServers;
 var engine = require("engine.io");
-var mongo = new Db(config.mongo.db, new MongoServer("127.0.0.1", 27017, {strict:true})); //local setup
-//var mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, 30957, {strict:true})); //new port from mongolab
-var engine =  engine.listen(8081, "0.0.0.0");
+var mongo;//
+
+if (config.mongo.replica) {
+	var servers = [];
+	servers[0] = new MongoServer(config.mongo.host, config.mongo.port, {strict:true, auto_reconnect:true});
+	servers[1] = new MongoServer(config.mongo.host2, config.mongo.port2, {strict:true, auto_reconnect:true});
+	mongo = new Db(config.mongo.db, new ReplSetServers(servers));
+	
+	console.log('using repl set');
+} else {
+	mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true})); 
+}
+
+var engine =  engine.listen(8081, "127.0.0.1");
 var db_suffix = '_d0test';
 
 
@@ -23,7 +35,7 @@ function sendMessage(msg, log) {
 	  });
 	  
 	  //for printing all messages
-	  //console.log(msg);
+	  console.log(msg);
 	}
 
   // log msg
@@ -75,11 +87,16 @@ module.exports = {
 	setWriteDb : setWriteDb,
 	
 	mongo : mongo,
+	mongouser: config.mongo.user,
+	mongopass: config.mongo.pass,
  	engine : engine,
  	async : require('async'),
  	db_suffix : db_suffix,
  	
  	// is there a live streaming debate
- 	live : false
+ 	live : false,
+ 	
+ 	// is it initialized
+ 	initialized : false
 };
 

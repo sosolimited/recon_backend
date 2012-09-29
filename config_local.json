@@ -1,9 +1,9 @@
 {
   "mongo": {
-    "user": "",
-    "pass": "",
-
+  
     "host": "localhost",
-    "db": "recon"
+    "db": "recon",
+    
+    "replica": false
   }
 }
