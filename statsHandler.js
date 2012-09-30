@@ -11,7 +11,8 @@ function sendStats() {
 		
 					var message = {
 						type: "stats",
-						calcs: [["posemo", "+posemo"], //use cat names if they correspond!
+						calcs: [["funct", "+funct"], //function words. for testing.
+										[["posemo", "+posemo"], //use cat names if they correspond!
 										["negemo", "+negemo"], 
 										["anger", "+anger"], 
 										["i", "+i"], 
@@ -63,6 +64,7 @@ function calcCats(msg) {
 		} else {
 	
 			common.mongo.collection('word_instances', function(err, collection) {
+
 				collection.find({categories:catName, speakerID:1}).count(function(err, val1) {
 					collection.find({categories:catName, speakerID:2}).count(function(err, val2) {
 	
@@ -73,6 +75,7 @@ function calcCats(msg) {
 				
 				
 			});
+			
 		}
 	}
 }
