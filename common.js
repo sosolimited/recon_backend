@@ -19,9 +19,9 @@ if (config.mongo.replica) {
 }
 
 var engine =  engine.listen(8081, "127.0.0.1");
-var db_suffix = '_d0test';
+var db_suffix = '_scratch';
 
-
+var unlock_db = false;
 
 var usingDoc = false; //JRO
 
@@ -47,6 +47,7 @@ function sendMessage(msg, log) {
 }
 
 function setWriteDb(db) {
+
 	switch (db) {
 		case '0':
 			db_suffix = '_d0';
@@ -67,14 +68,31 @@ function setWriteDb(db) {
 			db_suffix = '_d2test';
 			break;
 			
+		//JRO - using scratch DB as the default	
+		case 'scratch':
+			db_suffix = '_scratch';
+			break;
+			
 		default:
-			db_suffix = '_d0test';
-			console.log('db name not recognized, using _d0test');
+			db_suffix = '_scratch';
+			console.log('db name not recognized, using _scratch');
 			break;
 	}
 	
 	console.log("set db "+db_suffix +" "+ db);
 	module.exports.db_suffix = db_suffix;
+	
+}
+
+function unlockDb(unlock)
+{
+  console.log("Unlock DB:"+db_suffix+ " Set:"+unlock);
+	unlock_db = unlock;
+}
+
+function dbUnlocked()
+{
+	return unlock_db;
 }
 
 module.exports = {
@@ -92,6 +110,9 @@ module.exports = {
  	engine : engine,
  	async : require('async'),
  	db_suffix : db_suffix,
+ 	
+ 	unlockDb : unlockDb,
+ 	dbUnlocked : dbUnlocked,
  	
  	// is there a live streaming debate
  	live : false,
