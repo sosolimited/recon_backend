@@ -127,10 +127,12 @@ function start() {
 			
 			//JRO - new Data Methods
 			data = String(data);
-			//console.log("data: "+data);
+			//console.log('');
+			//console.log("data: "+data+" "+data.length);
 			
 			var msg = cc.stripTCPDelimiter(data);	
-			//console.log(msg);		
+			//console.log(msg+" "+msg.length);		
+			//process.stdout.write(msg);
 			
 			cc.handleChars(msg);
 			
@@ -192,13 +194,6 @@ function start() {
 		  common.mongo.authenticate(common.mongouser, common.mongopass, function(err, p_client) { 
 		  }); 
 		}
-		
-	  common.mongo.collection('LIWC', function(err, collection) {
-	    collection.count(function(err, count) {
-		    console.log("There are " + count + " records in the test collection. Here they are:"+err);
-		  });
-	
-	  });
 	
 	  //default to scratch db, clear it, and unlock it
 	  common.setWriteDb('scratch');

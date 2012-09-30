@@ -64,10 +64,12 @@ function parseWords(text)
 		//If the element isn't the last in an array, it is a new word
 		//if ((i<tokens.length - 1) && tokens[i] !== "")
 		if ((i == 0) && (i<tokens.length - 1) && tokens[i] !== "") //JRO - hack to only process one token at a time
+		//if ((i == 0) && (i<tokens.length - 1))
 		{
 			var tok = tokens[i];
+			
 			console.log("");
-			console.log("tok:"+tok);
+			console.log("tok:"+tok + " l:"+tok.length );
 
 			substrL += tokens[i].length+1;
 
@@ -488,29 +490,24 @@ function checkAbrev(token1)
 
 
 
-//TODO: This is still failing to delinit
+//JRO - fixed delimeters
 function stripTCPDelimiter(text)
 {		
-	//var re = '/\*{3}./';
-	//text = text.replace(re, '');
 
-	//JRO 092712 - using new line delimiter
-	//also not just looking at the end of the string since messages get concatenated
-
-/*
-	text = text.replace("***\0", '');
-	//PEND: fix this
-	//for some reason, it's missing the replace every once in a while, but doing it twice helps 
-	text = text.replace("***\0", '');
-*/
-
-	//JRO 092712 - using new line delimiter
-	text = text.replace("\n", '');
-	//PEND: fix this
-	//for some reason, it's missing the replace every once in a while, but doing it twice helps 
-	text = text.replace("\n", '');
-
+	while (text.indexOf('\n\0') != -1)
+	{
+		text = text.replace('\n\0', '');
+	}
+	
+	/*
+	if (text.indexOf('\0') != -1) console.log("Null");
+	if (text.indexOf('\r') != -1) console.log("Return");
+	if (text.indexOf('\f') != -1) console.log("Feed");
+	if (text.indexOf('\n') != -1) console.log("Line");
+	*/
+	
 	return text;
+	
 }
 
 //JRO - explict call to change speaker
