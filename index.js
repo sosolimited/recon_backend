@@ -59,12 +59,22 @@ function start() {
 		var msg = chunk.toString().replace('\n', '');
 		console.log("Input message: " + msg + "<"); 
 	
-		if (msg.indexOf('use db') != -1) 
+		if (msg.indexOf('use db') == 0) 
 		{
 			common.setWriteDb(msg.substring(7));
 			clearDB(common.db_suffix);
-			if (common.db_suffix == '_scratch') common.unlockDb(true);
-			else common.unlockDb(false);
+			if (common.db_suffix == '_scratch') unlockDb(true);
+			else unlockDb(false);
+		}
+		
+		else if (msg == 'unlock')
+		{
+			unlockDb(true);
+		}
+		
+		else if (msg == 'lock')
+		{
+			unlockDb(false);
 		}
 	
 	});
@@ -193,7 +203,7 @@ function start() {
 	  //default to scratch db, clear it, and unlock it
 	  common.setWriteDb('scratch');
 	  clearDB('scratch');
-	  common.unlockDb(true);
+	  unlockDb(true);
 
 		setInterval(stats.sendStats, 5000);
 		//setInterval(stats.sendStats, 50000); //test	
@@ -233,6 +243,11 @@ function clearDB(dbName)
 		});
 	}
 
+}
+
+function unlockDb(flag)
+{
+	common.unlockDb(flag);
 }
 
 
