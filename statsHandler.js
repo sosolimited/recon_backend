@@ -3,34 +3,38 @@ var common = require('./common.js');
 
 function sendStats() {
 
-	common.mongo.collection('word_instances', function(err, collection) {
-		collection.find({speakerID:1}).count(function(err, total1) {
-			collection.find({speakerID:2}).count(function(err, total2) {
-	
-				var message = {
-					type: "stats",
-					calcs: [["funct", "+funct"], //for testing
-									["posemo", "+posemo"], //use cat names if they correspond!
-									["negemo", "+negemo"], 
-									["anger", "+anger"], 
-									["i", "+i"], 
-									["we", "+we"], 
-									["complexity", "+excl+tentat+negate-incl+discrep"],
-									["status", "+we-i"],
-									["depression", "+i+physical+negemo-posemo"],
-									["formality", "-i+article+sixltr-present-discrep"],
-									["honesty", "+self+you+heshe+they+ipron+excl-negemo"]],
-					tempVal: [0,0],
-					total: [total1, total2],
-					timeDiff: new Date().getTime() - common.startTime
-				};
-			
-				calcCats(message);
-			
+	if (common.dbUnlocked())
+	{
+		common.mongo.collection('word_instances', function(err, collection) {
+			collection.find({speakerID:1}).count(function(err, total1) {
+				collection.find({speakerID:2}).count(function(err, total2) {
+		
+					var message = {
+						type: "stats",
+						calcs: [["funct", "+funct"], //function words. for testing.
+										[["posemo", "+posemo"], //use cat names if they correspond!
+										["negemo", "+negemo"], 
+										["anger", "+anger"], 
+										["i", "+i"], 
+										["we", "+we"], 
+										["complexity", "+excl+tentat+negate-incl+discrep"],
+										["status", "+we-i"],
+										["depression", "+i+physical+negemo-posemo"],
+										["formality", "-i+article+sixltr-present-discrep"],
+										["honesty", "+self+you+heshe+they+ipron+excl-negemo"]],
+						tempVal: [0,0],
+						total: [total1, total2],
+						timeDiff: new Date().getTime() - common.startTime
+					};
+				
+					calcCats(message);
+				
+				});
+				
 			});
-			
 		});
-	});
+	}
+	else console.log("sendStats(): DB is locked, not adding data");
 }
 
 function calcCats(msg) {
