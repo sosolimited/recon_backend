@@ -131,7 +131,8 @@ function parseWords(text)
 			}
 
 			namedentity(word, sentenceStartF, function(resp) {
-				handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
+				if (common.dbUnlocked()) handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
+				else console.log('parseWords(): DB is locked, not adding data');
 			});
 		}
 		//Otherwise this should be returned as part of the buffer
@@ -447,22 +448,9 @@ function checkAbrev(token1)
 //TODO: This is still failing to delinit
 function stripTCPDelimiter(text)
 {		
-	//var re = '/\*{3}./';
-	//text = text.replace(re, '');
-	
-	//JRO 092712 - using new line delimiter
-	//also not just looking at the end of the string since messages get concatenated
-
-/*
-	text = text.replace("***\0", '');
-	//PEND: fix this
-	//for some reason, it's missing the replace every once in a while, but doing it twice helps 
-	text = text.replace("***\0", '');
-*/
 
 	//JRO 092712 - using new line delimiter
 	text = text.replace("\n", '');
-	//PEND: fix this
 	//for some reason, it's missing the replace every once in a while, but doing it twice helps 
 	text = text.replace("\n", '');
 

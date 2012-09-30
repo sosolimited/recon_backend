@@ -62,6 +62,9 @@ function start() {
 		if (msg.indexOf('use db') != -1) 
 		{
 			common.setWriteDb(msg.substring(7));
+			clearDB(common.db_suffix);
+			if (common.db_suffix == '_scratch') common.unlockDb(true);
+			else common.unlockDb(false);
 		}
 	
 	});
@@ -120,26 +123,6 @@ function start() {
 			//console.log(msg);		
 			
 			cc.handleChars(msg);
-			
-			
-			//092712 - no longer using message types since TCP gets concatenated
-			/*
-			var msgData = parseIncoming(msg);
-		
-			if (msgData.type == 'c')
-			{
-				//handle the CC
-				console.log(msgData.body);
-				//cc.handleChars(msgData.body);
-			}
-			else if (msgData.type == 's')
-			{
-				//speaker switching
-				//console.log("Speaker Switch: " + msgData.body);
-				//092712 - this method has been deprecated we now handle speaker switching with special words
-				//cc.setSpeaker(msgData.body);
-			}
-			*/
 			
 		});
 		
@@ -204,42 +187,53 @@ function start() {
 	    collection.count(function(err, count) {
 		    console.log("There are " + count + " records in the test collection. Here they are:"+err);
 		  });
-
+	
 	  });
 	
-		//  empty test dbs
-		for (var i=0; i<3; i++) {
-			// clear out dbs
-			common.mongo.collection("messages"+i+"test", function(err, collection) {9
-				collection.remove(function(err, result) {});
-			});
-			common.mongo.collection("word_instances_d"+i+"test", function(err, collection) {
-				collection.remove(function(err, result) {});
-			});
-			common.mongo.collection("sentence_instances_d"+i+"test", function(err, collection) {
-				collection.remove(function(err, result) {});
-			});
-			common.mongo.collection("unique_words_d"+i+"test", function(err, collection) {9
-				collection.remove(function(err, result) {});
-			});
-			
-			for (var j=2; j<5; j++) {
-				common.mongo.collection("unique_"+j+"grams_d"+i+"test", function(err, collection) {
-					collection.remove(function(err, result) {});
-				});
-			}
-		}
+	  //default to scratch db, clear it, and unlock it
+	  common.setWriteDb('scratch');
+	  clearDB('scratch');
+	  common.unlockDb(true);
 
-		setInterval(stats.sendStats, 5000);	
+		setInterval(stats.sendStats, 5000);
+		//setInterval(stats.sendStats, 50000); //test	
 		
 	});
-	
 
     
 }
 
 // do it
 start();
+
+
+function clearDB(dbName)
+{
+
+	console.log('Clear DB:' + dbName);	
+
+	//clear out all the collections
+	common.mongo.collection("messages_"+dbName, function(err, collection) {
+		collection.remove(function(err, result) {});
+	});
+	common.mongo.collection("word_instances_"+dbName, function(err, collection) {
+		collection.remove(function(err, result) {});
+	});
+	common.mongo.collection("sentence_instances_"+dbName, function(err, collection) {
+		collection.remove(function(err, result) {});
+	});
+	common.mongo.collection("unique_words_"+dbName, function(err, collection) {
+		collection.remove(function(err, result) {});
+	});
+	
+	//ngrams
+	for (var j=2; j<5; j++) {
+		common.mongo.collection("unique_"+j+"grams_"+dbName, function(err, collection) {
+			collection.remove(function(err, result) {});
+		});
+	}
+
+}
 
 
 function loadDoc(docName, delay) {
@@ -294,35 +288,3 @@ function sendCharsFromDoc() {
 	
 }
 
-//JRO - no longer useful
-/*
-function parseIncoming(message)
-{
-	if (message.length > 2)
-	{
-		var msgType = message.slice(0,1);
-		var msgBody = message.slice(2,message.length);
-	
-		//console.log(msgType + " " + msgBody);
-		return {type:msgType, body:msgBody};
-	}
-	else return {type:'unformatted', body:message};
-}
-*/
-
-/*
-//JRO - deprecated method?
-function receiveChars(response, request)
-{
-	var url_parts = url.parse(request.url, true);
-	var msg = url_parts.query.chars;
-	
-	var data = parseIncoming(msg);
-	
-	if (data.type == 'c')
-	{
-		//handle the CC
-		//cc.handleChars(data.body);
-	}
-}
-*/
