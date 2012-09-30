@@ -12,7 +12,7 @@ function sendStats() {
 					var message = {
 						type: "stats",
 						calcs: [["funct", "+funct"], //function words. for testing.
-										[["posemo", "+posemo"], //use cat names if they correspond!
+										["posemo", "+posemo"], //use cat names if they correspond!
 										["negemo", "+negemo"], 
 										["anger", "+anger"], 
 										["i", "+i"], 
