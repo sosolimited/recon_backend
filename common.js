@@ -99,6 +99,8 @@ module.exports = {
 	url : require('url'),
 	net : require('net'),
 	fs : require('fs'),	
+	
+	//JRO - now setting start time when you unlock a db
 	startTime : new Date(2012, 9, 3, 21), //defaults to first debate right now, update this!
 	
 	sendMessage : sendMessage,

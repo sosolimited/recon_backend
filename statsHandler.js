@@ -57,6 +57,8 @@ function calcCats(msg) {
 		//console.log(traitModifier+" "+traitName+" "+catEndIndex+" "+catName+" "+remainder);
 	
 		// if we've already looked up this val, don't do it again
+		// TODO: this should be looked up each time correct?
+		
 		if (msg[traitName]) {
 		
 			addVal(msg, traitModifier, traitName, msg[traitName]*msg['total'], remainder);
