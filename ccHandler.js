@@ -224,7 +224,8 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 				if (leadPunct) {
 					//console.log("lead punct");
 					if (leadPunct != ' ' && leadPunct != '\n') // && leadPunct.length == 1) length is not working well here
-						sendWord(cb, timeDiff - 1, speaker, uniqueWDoc, leadPunct, true, ngrams); //JRO - arguments were missing
+						//sendWord(cb, timeDiff - 1, speaker, uniqueWDoc, leadPunct, true, ngrams); //JRO - arguments were missing, punctFlag now -1,0,1
+						sendWord(cb, timeDiff - 1, speaker, uniqueWDoc, leadPunct, -1, ngrams);
 					else cb(null, uniqueWDoc, ngrams);	
 
 				} 
@@ -235,13 +236,13 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 				//console.log('After:'+uniqueWDoc.word);
 				if (!speakerSwitch)
 					//console.log('About to send:'+w+' uniqueWDoc.word:'+uniqueWDoc.word);
-					sendWord(cb, timeDiff, speaker, uniqueWDoc, uniqueWDoc.word, false, ngrams);	
+					if (uniqueWDoc.word != 'undefined') sendWord(cb, timeDiff, speaker, uniqueWDoc, uniqueWDoc.word, 0, ngrams);	//, punctFlag now -1,0,1
 			},
 
 			function(uniqueWDoc, ngrams, cb) { // send punctuation
 				if (endPunct) {
 					if (endPunct != ' ' && endPunct != '\n') //  && endPunct.length == 1) length is not working here
-						sendWord(cb, timeDiff + 1, speaker, uniqueWDoc, endPunct, true, ngrams); //JRO - arguments were missing
+						sendWord(cb, timeDiff + 1, speaker, uniqueWDoc, endPunct, 1, ngrams); //JRO - arguments were missing , punctFlag now -1,0,1
 					else cb(null, uniqueWDoc, ngrams);	
 				} 
 				else cb(null, uniqueWDoc, ngrams);
@@ -418,7 +419,7 @@ function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 		dbid: uniqueWDoc._id,
 		word: w,
 		speaker: s,
-		punctuationFlag: punctuationF
+		punctuationFlag: punctuationF 
 	};
 
 	//console.log("Flag: "+punctuationF);
