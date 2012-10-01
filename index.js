@@ -62,13 +62,24 @@ function start() {
 		if (msg.indexOf('use db') == 0) 
 		{
 			common.setWriteDb(msg.substring(7));
-			clearDB(common.db_suffix);
-			if (common.db_suffix == '_scratch') unlockDb(true);
+			//clearDB(common.db_suffix);
+			if (common.db_suffix == '_scratch') {
+				clearDB(common.db_suffix);
+				unlockDb(true);
+			}
 			else unlockDb(false);
+		}
+		
+		else if (msg.indexOf('clear db') == 0) 
+		{
+			common.setWriteDb(msg.substring(7));
+			clearDB(common.db_suffix);
 		}
 		
 		else if (msg == 'unlock')
 		{
+			//JRO - setting the start time with an unlock
+			common.startTime = new Date().getTime();
 			unlockDb(true);
 		}
 		
