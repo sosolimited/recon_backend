@@ -230,22 +230,22 @@ function clearDB(dbName)
 	console.log('Clear DB:' + dbName);	
 
 	//clear out all the collections
-	common.mongo.collection("messages_"+dbName, function(err, collection) {
+	common.mongo.collection("messages"+dbName, function(err, collection) {
 		collection.remove(function(err, result) {});
 	});
-	common.mongo.collection("word_instances_"+dbName, function(err, collection) {
+	common.mongo.collection("word_instances"+dbName, function(err, collection) {
 		collection.remove(function(err, result) {});
 	});
-	common.mongo.collection("sentence_instances_"+dbName, function(err, collection) {
+	common.mongo.collection("sentence_instances"+dbName, function(err, collection) {
 		collection.remove(function(err, result) {});
 	});
-	common.mongo.collection("unique_words_"+dbName, function(err, collection) {
+	common.mongo.collection("unique_words"+dbName, function(err, collection) {
 		collection.remove(function(err, result) {});
 	});
 	
 	//ngrams
 	for (var j=2; j<5; j++) {
-		common.mongo.collection("unique_"+j+"grams_"+dbName, function(err, collection) {
+		common.mongo.collection("unique_"+j+"grams"+dbName, function(err, collection) {
 			collection.remove(function(err, result) {});
 		});
 	}

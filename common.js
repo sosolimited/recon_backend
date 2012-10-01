@@ -50,31 +50,31 @@ function setWriteDb(db) {
 
 	switch (db) {
 		case '0':
-			db_suffix = 'd0';
+			db_suffix = '_d0';
 			break;
 		case '1':
-			db_suffix = 'd1';
+			db_suffix = '_d1';
 			break;
 		case '2':
-			db_suffix = 'd2';
+			db_suffix = '_d2';
 			
 		case '0test':
-			db_suffix = 'd0test';
+			db_suffix = '_d0test';
 			break;
 		case '1test':
-			db_suffix = 'd1test';
+			db_suffix = '_d1test';
 			break;
 		case '2test':
-			db_suffix = 'd2test';
+			db_suffix = '_d2test';
 			break;
 			
 		//JRO - using scratch DB as the default	
 		case 'scratch':
-			db_suffix = 'scratch';
+			db_suffix = '_scratch';
 			break;
 			
 		default:
-			db_suffix = 'scratch';
+			db_suffix = '_scratch';
 			console.log('db name not recognized, using _scratch');
 			break;
 	}
