@@ -24,7 +24,7 @@ function sendStats() {
 										["status", "+we-i"],
 										["depression", "+i+bio+negemo-posemo"],
 										["formality", "-i+article+sixltr-present-discrep"],
-										["honesty", "+i+we+shehe+they+excl-negemo-motion"]],
+										["honesty", "+i+excl-negemo"]],
 						tempVal: [0,0],
 						total: [total1, total2],
 						timeDiff: new Date().getTime() - common.startTime
