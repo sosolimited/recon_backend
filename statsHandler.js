@@ -5,10 +5,14 @@ function sendStats() {
 
 	if (common.dbUnlocked())
 	{
-		common.mongo.collection('word_instances', function(err, collection) {
+		//JRO - adding suffix
+		common.mongo.collection('word_instances'+common.db_suffix, function(err, collection) {
 			collection.find({speakerID:1}).count(function(err, total1) {
 				collection.find({speakerID:2}).count(function(err, total2) {
 		
+					console.log('STATS >> 1:'+total1+' 2:'+total2);
+		
+					
 					var message = {
 						type: "stats",
 						calcs: [["funct", "+funct"], //function words. for testing.
@@ -28,7 +32,8 @@ function sendStats() {
 					};
 				
 					calcCats(message);
-				
+					
+
 				});
 				
 			});
@@ -59,13 +64,15 @@ function calcCats(msg) {
 		// if we've already looked up this val, don't do it again
 		// TODO: this should be looked up each time correct?
 		
+		
 		if (msg[traitName]) {
 		
 			addVal(msg, traitModifier, traitName, msg[traitName]*msg['total'], remainder);
 			
 		} else {
 	
-			common.mongo.collection('word_instances', function(err, collection) {
+			//JRO - adding db suffix
+			common.mongo.collection('word_instances'+common.db_suffix, function(err, collection) {
 
 				collection.find({categories:catName, speakerID:1}).count(function(err, val1) {
 					collection.find({categories:catName, speakerID:2}).count(function(err, val2) {

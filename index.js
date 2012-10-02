@@ -62,20 +62,20 @@ function start() {
 		if (msg.indexOf('use db') == 0) 
 		{
 			common.setWriteDb(msg.substring(7));
-			clearDB(common.db_suffix);
-			if (common.db_suffix == '_scratch') {
-				//clearDB(common.db_suffix);
+			console.log("db_suffix = "+common.db_suffix);
+			if (common.db_suffix == '_scratch') 
+			{
 				unlockDb(true);
 			}
 			else unlockDb(false);
 		}
 		
-		/*
-		else if (msg.indexOf('clear db') == 0) 
+		
+		else if (msg == 'clear db') 
 		{
 			clearDB(common.db_suffix);
 		}
-		*/
+		
 		
 		else if (msg == 'unlock')
 		{
@@ -208,12 +208,12 @@ function start() {
 		}
 	
 	  //default to scratch db, clear it, and unlock it
+	  common.startTime = new Date().getTime();
 	  common.setWriteDb('scratch');
-	  clearDB('scratch');
+	  clearDB(common.db_suffix);
 	  unlockDb(true);
 
 		setInterval(stats.sendStats, 5000);
-		//setInterval(stats.sendStats, 50000); //test	
 		
 	});
 
@@ -224,28 +224,28 @@ function start() {
 start();
 
 
-function clearDB(dbName)
+function clearDB(dbSuffix)
 {
 
-	console.log('Clear DB:' + dbName);	
+	console.log('Clear DB:' + dbSuffix);	
 
 	//clear out all the collections
-	common.mongo.collection("messages_"+dbName, function(err, collection) {
+	common.mongo.collection("messages"+dbSuffix, function(err, collection) {
 		collection.remove(function(err, result) {});
 	});
-	common.mongo.collection("word_instances_"+dbName, function(err, collection) {
+	common.mongo.collection("word_instances"+dbSuffix, function(err, collection) {
 		collection.remove(function(err, result) {});
 	});
-	common.mongo.collection("sentence_instances_"+dbName, function(err, collection) {
+	common.mongo.collection("sentence_instances"+dbSuffix, function(err, collection) {
 		collection.remove(function(err, result) {});
 	});
-	common.mongo.collection("unique_words_"+dbName, function(err, collection) {
+	common.mongo.collection("unique_words"+dbSuffix, function(err, collection) {
 		collection.remove(function(err, result) {});
 	});
 	
 	//ngrams
 	for (var j=2; j<5; j++) {
-		common.mongo.collection("unique_"+j+"grams_"+dbName, function(err, collection) {
+		common.mongo.collection("unique_"+j+"grams"+dbSuffix, function(err, collection) {
 			collection.remove(function(err, result) {});
 		});
 	}
