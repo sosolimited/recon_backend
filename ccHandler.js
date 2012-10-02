@@ -272,11 +272,11 @@ function getCats(w, cb) {
 
 	//looking for any digit within the string
 	if (w.search(/\d/) != -1) {
-		cats.push('number');
+		cats.push('numbrz');
 	}
 	
 	//adding six letter words
-	if (w.length >= 6) {
+	if (w.length >= 7) {
 		cats.push('sixltr');
 	}
 
