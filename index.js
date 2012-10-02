@@ -240,11 +240,13 @@ function clearDB(dbSuffix)
 		collection.remove(function(err, result) {});
 	});
 	common.mongo.collection("unique_words"+dbSuffix, function(err, collection) {
+
 		collection.remove(function(err, result) {});
 	});
 	
 	//ngrams
 	for (var j=2; j<5; j++) {
+
 		common.mongo.collection("unique_"+j+"grams"+dbSuffix, function(err, collection) {
 			collection.remove(function(err, result) {});
 		});
