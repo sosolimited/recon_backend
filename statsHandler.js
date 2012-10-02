@@ -10,9 +10,8 @@ function sendStats() {
 			collection.find({speakerID:1}).count(function(err, total1) {
 				collection.find({speakerID:2}).count(function(err, total2) {
 		
-					console.log('STATS >> 1:'+total1+' 2:'+total2);
+					//console.log('STATS >> 1:'+total1+' 2:'+total2);
 		
-					
 					var message = {
 						type: "stats",
 						calcs: [["funct", "+funct"], //function words. for testing.
@@ -61,13 +60,13 @@ function calcCats(msg) {
 		
 		//console.log(traitModifier+" "+traitName+" "+catEndIndex+" "+catName+" "+remainder);
 	
-		// if we've already looked up this val, don't do it again
+		// if we've already looked up this val within this function call, don't do it again
 		// TODO: this should be looked up each time correct?
 		
 		
 		if (msg[traitName]) {
 		
-			addVal(msg, traitModifier, traitName, msg[traitName]*msg['total'], remainder);
+			addVal(msg, traitModifier, traitName, [msg[traitName][0]*msg['total'][0], msg[traitName][1]*msg['total'][1]], remainder);
 			
 		} else {
 	
