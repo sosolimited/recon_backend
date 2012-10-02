@@ -236,7 +236,7 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 				//console.log('After:'+uniqueWDoc.word);
 				if (!speakerSwitch)
 					//console.log('About to send:'+w+' uniqueWDoc.word:'+uniqueWDoc.word);
-					if (uniqueWDoc.word != 'undefined') sendWord(cb, timeDiff, speaker, uniqueWDoc, uniqueWDoc.word, 0, ngrams);	//, punctFlag now -1,0,1
+					if (uniqueWDoc.word != 'Undefined' && (uniqueWDoc.word != 'undefined')) sendWord(cb, timeDiff, speaker, uniqueWDoc, uniqueWDoc.word, 0, ngrams);	//, punctFlag now -1,0,1
 			},
 
 			function(uniqueWDoc, ngrams, cb) { // send punctuation
