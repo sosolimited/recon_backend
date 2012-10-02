@@ -270,8 +270,14 @@ function getCats(w, cb) {
 
 	var cats = [];
 
+	//looking for any digit within the string
 	if (w.search(/\d/) != -1) {
 		cats.push('number');
+	}
+	
+	//adding six letter words
+	if (w.length >= 6) {
+		cats.push('sixltr');
 	}
 
 	common.mongo.collection('LIWC', function(e, c) {
@@ -365,7 +371,11 @@ function logSentence(speaker, wordID, time, cb) {
 function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 
 	//console.log('processNGrams');
+	
+	//FIXME: Eventually add and check ngram logic
+	cb(null, uniqueWDoc, []);
 
+	/*
 	var curGram;
 	if (l == 2) curGram = cur2Gram;
 	else if (l == 3) curGram = cur3Gram;
@@ -396,6 +406,7 @@ function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 		curGram.push(uniqueWDoc.word);
 		cb(null, uniqueWDoc, ngrams);
 	}
+	*/
 }
 
 
