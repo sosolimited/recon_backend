@@ -276,7 +276,7 @@ function getCats(w, cb) {
 	}
 	
 	//adding six letter words
-	if (w.length >= 6) {
+	if (w.length >= 7) {
 		cats.push('sixltr');
 	}
 
