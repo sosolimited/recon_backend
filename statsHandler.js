@@ -22,9 +22,9 @@ function sendStats() {
 										["we", "+we"], 
 										["complexity", "+excl+tentat+negate-incl+discrep"],
 										["status", "+we-i"],
-										["depression", "+i+physical+negemo-posemo"],
+										["depression", "+i+bio+negemo-posemo"],
 										["formality", "-i+article+sixltr-present-discrep"],
-										["honesty", "+self+you+heshe+they+ipron+excl-negemo"]],
+										["honesty", "+i+we+shehe+they+excl-negemo-motion"]],
 						tempVal: [0,0],
 						total: [total1, total2],
 						timeDiff: new Date().getTime() - common.startTime
