@@ -452,6 +452,8 @@ function handleSentenceEnd(timeDiff, speaker, cb) {
   sentistrength(curSentenceBuffer, function(sentiment) {
 		sendSentenceEnd(timeDiff, speaker, sentiment, curSentenceBuffer.split(" ").length-1);
 
+		console.log("senti "+sentiment);
+
 		sentenceStartF = true;
 		curSentenceBuffer = "";
 
