@@ -481,8 +481,7 @@ covert*	-2	General Inquirer Feb 2010
 covet*	-2	General Inquirer Feb 2010
 coward*	-2	General Inquirer Feb 2010		
 cozi*	2	kev		
-cozy*	2	kev		
-cracking	3	great, attractive	Cardiff/Wales	
+cozy*	2	kev			
 crafty	-2	General Inquirer Feb 2010		
 craic	2	irish, fun chat http://www.urbandictionary.com
 cram	-2	General Inquirer Feb 2010		
@@ -1661,7 +1660,7 @@ nucklehead*	-2	Feb-11
 nuisance	-2	General Inquirer Feb 2010
 nullification*	-2	General Inquirer Feb 2010
 nullify	-2	General Inquirer Feb 2010
-numb*	-2	
+numb	-2	
 number*	1	kev add
 numpty	-2	Feb-11
 nurtur*	1	
