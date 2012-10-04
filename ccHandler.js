@@ -128,7 +128,7 @@ function parseWords(text)
 			//spealer switching handled with special words
 			if (word && common.usingDoc)
 			{			
-				if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL") {
+				if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL" || word == "LEHRER") {
 					curSpeaker = 0;
 					speakerSwitch = true;
 				}
