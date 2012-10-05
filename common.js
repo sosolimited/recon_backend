@@ -1,6 +1,7 @@
 // Require the configuration file
 var config = require(__dirname + "/config.json");
 
+var fs = require("fs");
 var Db = require('mongodb').Db;
 var MongoServer = require('mongodb').Server;
 var ReplSetServers = require('mongodb').ReplSetServers;
@@ -64,6 +65,9 @@ function sendMessage(msg, log) {
       require("fs").writeFile("../recon_frontend/live.html", result);
     });
   }
+
+  // Append the message to the temporary messages file.
+  fs.appendFile('../recon_frontend/messages/' + db_suffix + '_test', JSON.stringify(msg) + ',\n');
 
   // log msg
   if (log) {
@@ -161,7 +165,7 @@ function dbUnlocked()
 module.exports = {
 	url : require('url'),
 	net : require('net'),
-	fs : require('fs'),	
+	fs : fs,	
 	
 	//JRO - now setting start time when you unlock a db
 	startTime : new Date(2012, 9, 3, 21), //defaults to first debate right now, update this!
