@@ -281,7 +281,6 @@ function loadHistory() {
 		common.mongo.collection('messages'+common.db_suffix, function(err, collection) {
 		collection.find(function(err, cursor) {
 			cursor.each(function(err, msg) { 
-				console.log("SEND "+msg);
 				// PEND only send to client requesting!
 				common.sendMessage(msg, false);
 			});
