@@ -29,16 +29,6 @@ stdin.on('data', function(chunk) {
 		}
 	}
 	
-	else if (msg = 'test')
-	{
-		if (ccSocket) {
-			ccSocket.write('test\n', 'utf8', function() {
-				console.log('Testing CC socket ' + ccSocket.bytesWritten );
-			});
-		}
-	}
-	
-	
 });
 
 
@@ -70,12 +60,10 @@ function start() {
 			else unlockDb(false);
 		}
 		
-		
 		else if (msg == 'clear db') 
 		{
 			clearDB(common.db_suffix);
 		}
-		
 		
 		else if (msg == 'unlock')
 		{
@@ -104,7 +92,10 @@ function start() {
 
       switch (msg.event) {
         case "loadDoc":
-        	loadDoc(msg.data["docName"], msg.data["delay"]);
+        	console.log("Load Doc request from: "+msg.data["url"]);
+        	//console.log(socket);
+        	if (msg.data["url"] == '127.0.0.1:8000') loadDoc(msg.data["docName"], msg.data["delay"]);
+        	else console.log("Not accepting loadDoc messages from remote");
         	break;
         case "loadHistory":
         	loadHistory();
