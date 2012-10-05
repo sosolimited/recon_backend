@@ -168,7 +168,8 @@ function parseWords(text)
 							handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
 						});
 					} else {
-						handleWord(curSpeaker, leadPunct, word.toString(), endPunct, sentenceEnd, speakerSwitch); 
+						if (word)
+							handleWord(curSpeaker, leadPunct, word.toString(), endPunct, sentenceEnd, speakerSwitch); 
 					}
 				} else console.log ('parseWords(): DB is Locked, not adding data');
 			}
