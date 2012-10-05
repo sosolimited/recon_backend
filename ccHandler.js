@@ -160,11 +160,13 @@ function parseWords(text)
 			}
 
 
-			namedentity(word, sentenceStartF, function(resp) {
-				if (common.dbUnlocked()) handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
-				else console.log ('parseWords(): DB is Locked, not adding data');
-			});
-
+			if (!speakerSwitch)
+			{
+				namedentity(word, sentenceStartF, function(resp) {
+					if (common.dbUnlocked()) handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
+					else console.log ('parseWords(): DB is Locked, not adding data');
+				});
+			}
 
 
 		}
