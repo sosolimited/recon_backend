@@ -412,8 +412,20 @@ function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 	}
 }
 
+function checkNGram(i, msg) {
+
+	if (i < msg.ngram.length) {
+		common.mongo.collection('unique_words'+common.db_suffix, function(e, c) {
+			c.find({categories:'funct', word:msg.ngram[i]}).count(function(err, val) {
+				if (val == 0) common.sendMessage(msg, true);
+				else checkNGram(i+1, msg);
+			});
+		});
+	}
+}
 
 function sendNewNGram(t, speaker, nid, n, nInstances) {
+	
 	var message = {
 		type: "newNGram",
 		speaker: speaker,
@@ -422,7 +434,7 @@ function sendNewNGram(t, speaker, nid, n, nInstances) {
 		ngram: n, 
 		instances: nInstances
 	};
-  common.sendMessage(message, true);
+  checkNGram(0, message);
 }
 
 function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
