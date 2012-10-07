@@ -7,6 +7,7 @@
     "host2": "ds039057-a1-internal.mongolab.com",                                                                  
     "port": 39057,  
     "db": "recon",
+    
     "replica": true
   }
 }
