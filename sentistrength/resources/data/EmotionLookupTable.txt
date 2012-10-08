@@ -1412,7 +1412,7 @@ joking	3
 joll*	3		
 jolliet	1	kev add	
 jonnick	2	pleasant	Devonshire/South West
-joy		3		
+joy	3		
 joys	3		
 joyous	3		
 joyful	3		
