@@ -13,7 +13,7 @@ var sentenceStartF = true;
 var cur2Gram = [];
 var cur3Gram = [];
 var cur4Gram = [];
-var minNGramOccurrences = 4;
+var minNGramOccurrences = 2;
 
 //MongoDB stuff
 var curSentenceID = 0;
@@ -162,10 +162,16 @@ function parseWords(text)
 
 			if (!speakerSwitch)
 			{
-				namedentity(word, sentenceStartF, function(resp) {
-					if (common.dbUnlocked()) handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
-					else console.log ('parseWords(): DB is Locked, not adding data');
-				});
+				if (common.dbUnlocked()) {
+					if (!common.usingDoc) {
+						namedentity(word, sentenceStartF, function(resp) {
+							handleWord(curSpeaker, leadPunct, resp, endPunct, sentenceEnd, speakerSwitch); 
+						});
+					} else {
+						if (word)
+							handleWord(curSpeaker, leadPunct, word.toString(), endPunct, sentenceEnd, speakerSwitch); 
+					}
+				} else console.log ('parseWords(): DB is Locked, not adding data');
 			}
 
 
@@ -373,11 +379,7 @@ function logSentence(speaker, wordID, time, cb) {
 function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 
 	//console.log('processNGrams');
-	
-	//FIXME: Eventually add and check ngram logic
-	cb(null, uniqueWDoc, []);
 
-	/*
 	var curGram;
 	if (l == 2) curGram = cur2Gram;
 	else if (l == 3) curGram = cur3Gram;
@@ -389,13 +391,13 @@ function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 		curGram.push(uniqueWDoc.word);
 		common.mongo.collection('unique_'+l+'grams'+common.db_suffix, function(e, c) {
 			c.findAndModify(
-				{ngram: curGram},
+				{ngram: curGram, speakerID:speaker},
 				[['_id','asc']], 
 				{$push: {wordInstanceIDs: wID, sentenceInstanceIDs: sID}}, 
 				{upsert:true, new:true},
 				function(err, object) {
 					if(object.wordInstanceIDs.length == minNGramOccurrences) {
-						sendNewNGram(t, object._id, curGram, object.wordInstanceIDs);
+						sendNewNGram(t, speaker, object._id, curGram, object.wordInstanceIDs);
 					}
 					if(object.wordInstanceIDs.length >= minNGramOccurrences) {
 						ngrams.push([object._id, object.wordInstanceIDs.length]);
@@ -408,19 +410,31 @@ function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 		curGram.push(uniqueWDoc.word);
 		cb(null, uniqueWDoc, ngrams);
 	}
-	*/
 }
 
+function checkNGram(i, msg) {
 
-function sendNewNGram(t, nid, n, nInstances) {
+	if (i < msg.ngram.length) {
+		common.mongo.collection('unique_words'+common.db_suffix, function(e, c) {
+			c.find({categories:'funct', word:msg.ngram[i]}).count(function(err, val) {
+				if (val == 0) common.sendMessage(msg, true);
+				else checkNGram(i+1, msg);
+			});
+		});
+	}
+}
+
+function sendNewNGram(t, speaker, nid, n, nInstances) {
+	
 	var message = {
 		type: "newNGram",
+		speaker: speaker,
 		timeDiff: t,
 		dbid: nid,
 		ngram: n, 
 		instances: nInstances
 	};
-  common.sendMessage(message, true);
+  checkNGram(0, message);
 }
 
 function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
@@ -453,6 +467,8 @@ function handleSentenceEnd(timeDiff, speaker, cb) {
 		// analyze sentiment
   sentistrength(curSentenceBuffer, function(sentiment) {
 		sendSentenceEnd(timeDiff, speaker, sentiment, curSentenceBuffer.split(" ").length-1);
+
+		console.log("senti "+sentiment);
 
 		sentenceStartF = true;
 		curSentenceBuffer = "";
