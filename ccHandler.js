@@ -397,7 +397,7 @@ function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 				{upsert:true, new:true},
 				function(err, object) {
 					if(object.wordInstanceIDs.length == minNGramOccurrences) {
-						sendNewNGram(t, speaker, object._id, curGram, object.wordInstanceIDs);
+						sendNewNGram(t, speaker, object._id, curGram, l);
 					}
 					if(object.wordInstanceIDs.length >= minNGramOccurrences) {
 						ngrams.push([object._id, object.wordInstanceIDs.length]);
@@ -417,8 +417,10 @@ function checkNGram(i, msg) {
 	if (i < msg.ngram.length) {
 		common.mongo.collection('unique_words'+common.db_suffix, function(e, c) {
 			c.find({categories:'funct', word:msg.ngram[i]}).count(function(err, val) {
-				if (val == 0) common.sendMessage(msg, true);
-				else checkNGram(i+1, msg);
+				if (val == 0) {
+					if (i == msg.ngram.length-1) common.sendMessage(msg, true);
+					else checkNGram(i+1, msg);
+				}
 			});
 		});
 	}
