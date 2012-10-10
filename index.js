@@ -8,7 +8,8 @@ var tcpServer;
 var ccSocket; //JRO
 var doc;
 var ind, nextInd;
-var intervalID;
+var charIntervalID;
+var statIntervalID;
 
 //JRO - Listening to terminal for disconnect commands
 var stdin = process.openStdin();
@@ -210,8 +211,9 @@ function start() {
 	  common.setWriteDb('scratch');
 	  unlockDb(false); //defualts to false
 	  clearDB(common.db_suffix);
+	  //unlockDb(false); //happens a touch later, helps with clear
 
-		setInterval(stats.sendStats, 5000);
+
 		
 	});
 
@@ -255,12 +257,20 @@ function clearDB(dbSuffix)
 function unlockDb(flag)
 {
 	common.unlockDb(flag);
+	if (flag) {		
+		statIntervalID = setInterval(stats.sendStats, 5000);
+	} else {
+		clearInterval(statIntervalID);
+	}
+		
 }
 
 
 function loadDoc(docName, delay) {
 
 	console.log("d "+delay+" n "+docName);
+	
+	unlockDb(true)
 	
 	common.usingDoc = true; //JRO
 	
@@ -276,8 +286,8 @@ function loadDoc(docName, delay) {
 		} else {
 			ind = 0;
 			nextInd = 0;
-			clearTimeout(intervalID);
-			intervalID = setInterval(sendCharsFromDoc, delay);
+			clearInterval(charIntervalID);
+			charIntervalID = setInterval(sendCharsFromDoc, delay);
 		}
 	} catch (e) {
 		console.log(e);
@@ -298,12 +308,12 @@ function loadHistory() {
 function sendCharsFromDoc() {
 
 	if (ind < doc.length) {
-		nextInd = Math.min(ind + Math.floor((Math.random()*3)+1), doc.length);
+		nextInd = Math.min(ind + 2, doc.length);
 		cc.handleChars(doc.substring(ind, nextInd));
 		ind = nextInd;
 	}
 	else {
-		clearTimeout(intervalID);
+		clearInterval(charIntervalID);
 		cc.sendEndMessage();
 	}
 	
