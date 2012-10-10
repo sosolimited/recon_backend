@@ -53,11 +53,9 @@ function start() {
 		{
 			common.setWriteDb(msg.substring(7));
 			console.log("db_suffix = "+common.db_suffix);
-			if (common.db_suffix == '_scratch') 
-			{
-				unlockDb(true);
-			}
-			else unlockDb(false);
+			//if (common.db_suffix == '_scratch') unlockDb(true);
+			//else unlockDb(false);
+			unlockDb(false);
 		}
 		
 		else if (msg == 'clear db') 
@@ -67,14 +65,20 @@ function start() {
 		
 		else if (msg == 'unlock')
 		{
-			//JRO - setting the start time with an unlock
+			//JRO - setting the start time with an unlockDb
 			common.startTime = new Date().getTime();
 			unlockDb(true);
+
+			//broadcast live state with an unlock - must be done after unlocking
+			common.sendLiveState(); 
 		}
 		
 		else if (msg == 'lock')
 		{
 			unlockDb(false);
+			
+			//broadcast live state with an unlock - must be done after unlocking
+			common.sendLiveState();
 		}
 	
 	});
@@ -85,6 +89,9 @@ function start() {
 	
     //curSocket = socket;
     console.log("Connection " + socket.id + " accepted.");
+    
+    //send message: live
+    common.sendLiveState(socket);
     
     socket.on("message", function(msg) {
       msg = JSON.parse(msg);
@@ -201,8 +208,8 @@ function start() {
 	  //default to scratch db, clear it, and unlock it
 	  common.startTime = new Date().getTime();
 	  common.setWriteDb('scratch');
+	  unlockDb(false); //defualts to false
 	  clearDB(common.db_suffix);
-	  unlockDb(true);
 
 		setInterval(stats.sendStats, 5000);
 		

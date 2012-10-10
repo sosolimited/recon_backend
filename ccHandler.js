@@ -192,7 +192,10 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 
 	console.log("HANDLE WORD "+leadPunct+" "+w+" "+endPunct+" speaker "+speaker);
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
-	var timeDiff = new Date().getTime() - common.startTime;
+	var curTime = new Date().getTime();
+	var timeDiff = curTime - common.startTime;
+	
+	common.lastCCTime = curTime;
 
 	// if new sentence, generate ID and insert into sentence_instances
 
