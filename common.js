@@ -19,8 +19,8 @@ if (config.mongo.replica) {
 }
 
 var engine =  engine.listen(8081, "127.0.0.1");
-var db_suffix = '_scratch';
 
+var db_suffix = '_scratch';
 var unlock_db = false;
 
 var usingDoc = false; //JRO
@@ -44,6 +44,40 @@ function sendMessage(msg, log) {
 			collection.insert(msg);
 		});
 	}	
+}
+
+function sendLiveState(socket)
+{
+	//console.log(socket);
+	
+	var db = -1;
+	
+	if (unlock_db)
+	{
+		if (db_suffix == '_d0' || db_suffix == '_d0test') db = 0;
+		else if (db_suffix == '_d1' || db_suffix == '_d1test') db = 1;
+		else if (db_suffix == '_d2' || db_suffix == '_d2test') db = 2;
+		else db = -1; //using -1 if scratch db is selected
+	}
+
+	var msg = {
+		type: "livestate",
+		debate: db
+	};
+	
+	//if socket is provided, send only to that socket
+	if (socket) {
+		console.log("CONNECT: sending live state: " + JSON.stringify(msg)); 
+		socket.send(JSON.stringify(msg)); 
+	}
+	else
+	{
+		console.log("HEARTBEAT: sending live state: " + JSON.stringify(msg));
+		Object.keys(engine.clients).forEach(function(key) {
+		  engine.clients[key].send(JSON.stringify(msg));
+	  });
+	}
+	
 }
 
 function setWriteDb(db) {
@@ -95,6 +129,8 @@ function dbUnlocked()
 	return unlock_db;
 }
 
+
+
 module.exports = {
 	url : require('url'),
 	net : require('net'),
@@ -102,6 +138,8 @@ module.exports = {
 	
 	//JRO - now setting start time when you unlock a db
 	startTime : new Date(2012, 9, 3, 21), //defaults to first debate right now, update this!
+	
+	lastCCTime : new Date().getTime(),
 	
 	sendMessage : sendMessage,
 	setWriteDb : setWriteDb,
@@ -115,6 +153,8 @@ module.exports = {
  	
  	unlockDb : unlockDb,
  	dbUnlocked : dbUnlocked,
+ 	
+ 	sendLiveState : sendLiveState,
  	
  	// is there a live streaming debate
  	live : false,
