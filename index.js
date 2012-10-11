@@ -205,7 +205,7 @@ function start() {
 		  common.mongo.authenticate(common.mongouser, common.mongopass, function(err, p_client) { 
 		  }); 
 		}
-	
+
 	  //default to scratch db, clear it, and unlock it
 	  common.startTime = new Date().getTime();
 	  common.setWriteDb('scratch');
@@ -228,6 +228,12 @@ function clearDB(dbSuffix)
 {
 
 	console.log('Clear DB:' + dbSuffix);	
+
+  // Remove the file.
+  try {
+  common.fs.unlinkSync("/tmp/test.json");
+  } catch (ex) { }
+
 
 	//clear out all the collections
 	common.mongo.collection("messages"+dbSuffix, function(err, collection) {
