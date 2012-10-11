@@ -67,7 +67,7 @@ function sendMessage(msg, log) {
   }
 
   // Append the message to the temporary messages file.
-  fs.appendFile('../recon_frontend/messages/' + db_suffix + '_test', JSON.stringify(msg) + ',\n');
+  fs.appendFile('../recon_frontend/messages/' + db_suffix, JSON.stringify(msg) + '\n');
 
   // log msg
   if (log) {
