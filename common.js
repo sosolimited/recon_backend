@@ -7,6 +7,7 @@ var MongoServer = require('mongodb').Server;
 var ReplSetServers = require('mongodb').ReplSetServers;
 var engine = require("engine.io");
 var mongo;//
+var phantom = require("phantom");
 
 if (config.mongo.replica) {
 	var servers = [];
@@ -14,7 +15,7 @@ if (config.mongo.replica) {
 	servers[1] = new MongoServer(config.mongo.host2, config.mongo.port2, {strict:true, auto_reconnect:true});
 	mongo = new Db(config.mongo.db, new ReplSetServers(servers));
 	
-	console.log('using repl set');
+	//console.log('using repl set');
 } else {
 	mongo = new Db(config.mongo.db, new MongoServer(config.mongo.host, config.mongo.port, {strict:true})); 
 }
@@ -26,6 +27,18 @@ var unlock_db = false;
 
 var usingDoc = false; //JRO
 
+var page;
+
+// Set up the headless environment.
+phantom.create(function(ph) {
+  ph.createPage(function(p) {
+    p.open("http://localhost:8000/?nosocket=true", function(status) {
+      // The page is now ready to accept messages.
+      page = p;
+    });
+  });
+});
+
 function sendMessage(msg, log) {
 
 	if (engine.clients) {
@@ -36,8 +49,22 @@ function sendMessage(msg, log) {
 	  });
 	  
 	  //for printing all messages
-	  console.log(msg);
+	  //console.log(msg);
 	}
+  if (page) {
+    // Send the message to the page directly.
+    // I know, I know.  I'm doing a lot here, this should be most probably be
+    // refactored.
+    page.evaluate(function(message) {
+      // shit code, rethink...
+      window.require(["app"], function(app) { app.handleMessage(JSON.parse(message)) });
+
+      return window.document.getElementById("transcript").innerHTML || "";
+    }, JSON.stringify(msg), function(result) {
+      fs.writeFile("../recon_frontend/live.html", result);
+    });
+  }
+
 
   // Append the message to the temporary messages file.
   fs.appendFile('../recon_frontend/messages/' + db_suffix, JSON.stringify(msg) + '\n');
@@ -52,8 +79,6 @@ function sendMessage(msg, log) {
 
 function sendLiveState(socket)
 {
-	//console.log(socket);
-	
 	var db = -1;
 	
 	if (unlock_db)
@@ -76,7 +101,7 @@ function sendLiveState(socket)
 	}
 	else
 	{
-		console.log("HEARTBEAT: sending live state: " + JSON.stringify(msg));
+		//console.log("HEARTBEAT: sending live state: " + JSON.stringify(msg));
 		Object.keys(engine.clients).forEach(function(key) {
 		  engine.clients[key].send(JSON.stringify(msg));
 	  });
@@ -113,18 +138,18 @@ function setWriteDb(db) {
 			
 		default:
 			db_suffix = '_scratch';
-			console.log('db name not recognized, using _scratch');
+			//console.log('db name not recognized, using _scratch');
 			break;
 	}
 	
-	console.log("set db "+db_suffix +" "+ db);
+	//console.log("set db "+db_suffix +" "+ db);
 	module.exports.db_suffix = db_suffix;
 	
 }
 
 function unlockDb(unlock)
 {
-  console.log("Unlock DB:"+db_suffix+ " Set:"+unlock);
+  //console.log("Unlock DB:"+db_suffix+ " Set:"+unlock);
 	unlock_db = unlock;
 }
 
