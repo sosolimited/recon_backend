@@ -60,9 +60,9 @@ function sendMessage(msg, log) {
       // shit code, rethink...
       window.require(["app"], function(app) { app.handleMessage(JSON.parse(message)) });
 
-      return window.document.getElementById("transcript").innerHTML || "Not finding shit";
+      return window.document.getElementById("transcript").innerHTML || "";
     }, JSON.stringify(msg), function(result) {
-      require("fs").writeFile("../recon_frontend/live.html", result);
+      fs.writeFile("../recon_frontend/live.html", result);
     });
   }
 
