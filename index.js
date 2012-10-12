@@ -276,8 +276,10 @@ function loadDoc(docName, delay) {
 
 	console.log("d "+delay+" n "+docName);
 	
+	common.setWriteDb('1test');
 	unlockDb(true)
-	
+	common.sendLiveState();
+    
 	common.usingDoc = true; //JRO
 	
 	// reset start date
@@ -297,7 +299,7 @@ function loadDoc(docName, delay) {
 		}
 	} catch (e) {
 		console.log(e);
-	}		
+	}	
 }
 
 function loadHistory() {
