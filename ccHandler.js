@@ -68,8 +68,8 @@ function parseWords(text)
 		{
 			var tok = tokens[i];
 			
-			console.log("");
-			console.log("tok:"+tok + " l:"+tok.length );
+			//console.log("");
+			//console.log("tok:"+tok + " l:"+tok.length );
 
 			substrL += tokens[i].length+1;
 
@@ -79,7 +79,7 @@ function parseWords(text)
 				//NOTE: substring was not working correctly ... might actually be length that was off
 				//using replace instead
 				tok = tok.replace(leadPunct, "");
-				console.log('lead p ' + leadPunct);
+				//console.log('lead p ' + leadPunct);
 			}
 			//console.log("tok1:"+tok);
 
@@ -90,7 +90,7 @@ function parseWords(text)
 
 			var numWord = tok.match(numberRegEx);
 			if (numWord) {
-				console.log('number');
+				//console.log('number');
 				word = numWord;
 			}
 			//console.log("tok2:"+tok);
@@ -99,7 +99,7 @@ function parseWords(text)
 			// PEND: broken 
 			var abbrevWord = tok.match(abbrevRegEx);
 			if (abbrevWord && !word) {
-				console.log('abbrev');
+				//console.log('abbrev');
 				word = abbrevWord;
 			}
 			//console.log("tok3:"+tok);
@@ -111,7 +111,7 @@ function parseWords(text)
 			}
 			//console.log("tok4:"+tok);
 
-			if (word) console.log("Word: " + word);
+			//if (word) console.log("Word: " + word);
 
 			//look for final punctutation, the leftovers
 			var endPunct = tok.replace(word, "");
@@ -120,7 +120,7 @@ function parseWords(text)
 			// check if sentence end
 			if (endPunct.search(sentenceEndRegEx) != -1) {
 				sentenceEnd = true;
-				console.log('END SENTENCE');
+				//console.log('END SENTENCE');
 			}
 
 			var speakerSwitch = false;
@@ -190,7 +190,7 @@ function parseWords(text)
 function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 {	
 
-	console.log("HANDLE WORD "+leadPunct+" "+w+" "+endPunct+" speaker "+speaker);
+	//console.log("HANDLE WORD "+leadPunct+" "+w+" "+endPunct+" speaker "+speaker);
 	var curWordID = new common.mongo.bson_serializer.ObjectID(); 
 	var curTime = new Date().getTime();
 	var timeDiff = curTime - common.startTime;
@@ -268,7 +268,7 @@ function handleWord(speaker, leadPunct, w, endPunct, sentenceEnd, speakerSwitch)
 	];
 
 	var cb = function(err, res) {
-	    console.log(arguments);
+	    //console.log(arguments);
 	};
 
 	common.async.waterfall(funcs, cb);
