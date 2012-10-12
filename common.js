@@ -79,8 +79,6 @@ function sendMessage(msg, log) {
 
 function sendLiveState(socket)
 {
-	//console.log(socket);
-	
 	var db = -1;
 	
 	if (unlock_db)
@@ -98,7 +96,7 @@ function sendLiveState(socket)
 	
 	//if socket is provided, send only to that socket
 	if (socket) {
-		//console.log("CONNECT: sending live state: " + JSON.stringify(msg)); 
+		console.log("CONNECT: sending live state: " + JSON.stringify(msg)); 
 		socket.send(JSON.stringify(msg)); 
 	}
 	else
