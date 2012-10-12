@@ -51,7 +51,6 @@ function sendMessage(msg, log) {
 	  //for printing all messages
 	  //console.log(msg);
 	}
-
   if (page) {
     // Send the message to the page directly.
     // I know, I know.  I'm doing a lot here, this should be most probably be
@@ -65,6 +64,7 @@ function sendMessage(msg, log) {
       fs.writeFile("../recon_frontend/live.html", result);
     });
   }
+
 
   // Append the message to the temporary messages file.
   fs.appendFile('../recon_frontend/messages/' + db_suffix, JSON.stringify(msg) + '\n');
