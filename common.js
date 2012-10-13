@@ -51,23 +51,7 @@ function sendMessage(msg, log) {
 	  //for printing all messages
 	  //console.log(msg);
 	}
-  if (page) {
-    // Send the message to the page directly.
-    // I know, I know.  I'm doing a lot here, this should be most probably be
-    // refactored.
-    page.evaluate(function(message) {
-      // shit code, rethink...
-      window.require(["app"], function(app) { app.handleMessage(JSON.parse(message)) });
-
-      return window.document.getElementById("transcript").innerHTML || "";
-    }, JSON.stringify(msg), function(result) {
-      fs.writeFile("../recon_frontend/live.html", result);
-    });
-  }
-
-
-  // Append the message to the temporary messages file.
-  fs.appendFile('../recon_frontend/messages/' + db_suffix, JSON.stringify(msg) + '\n');
+	updatePhantom(msg);
 
   // log msg
   if (log) {
@@ -76,6 +60,7 @@ function sendMessage(msg, log) {
 		});
 	}	
 }
+
 
 function sendLiveState(socket)
 {
@@ -105,8 +90,36 @@ function sendLiveState(socket)
 		Object.keys(engine.clients).forEach(function(key) {
 		  engine.clients[key].send(JSON.stringify(msg));
 	  });
+	  
+	  updatePhantom(msg);
 	}
+  
 	
+}
+
+
+function updatePhantom(msg) {
+  if (page) {
+    // Send the message to the page directly.
+    // I know, I know.  I'm doing a lot here, this should be most probably be
+    // refactored.
+    page.evaluate(function(message) {
+      // shit code, rethink...
+      window.require(["app"], function(app) { app.handleMessage(JSON.parse(message)) });
+
+      return [window.document.querySelector("#transcript > .wrapper").innerHTML,
+      window.document.querySelector("#bigWordsHolder").innerHTML];
+    }, JSON.stringify(msg), function(result) {
+    	if (result) {
+      	fs.writeFile("../recon_frontend/live.html", result[0]);
+      	fs.writeFile("../recon_frontend/live_bigwords.html", result[1]);
+      } else console.log("err no res");
+    });
+  }
+  
+  
+  // Append the message to the temporary messages file.
+  fs.appendFile('../recon_frontend/messages/' + db_suffix, JSON.stringify(msg) + '\n');	
 }
 
 function setWriteDb(db) {
