@@ -301,7 +301,7 @@ function loadDoc(docName, delay) {
 		console.log(e);
 	}	
 }
-
+/*
 function loadHistory() {
 		common.mongo.collection('messages'+common.db_suffix, function(err, collection) {
 		collection.find(function(err, cursor) {
@@ -312,7 +312,7 @@ function loadHistory() {
 		});
 	});	
 }
-
+*/
 function sendCharsFromDoc() {
 
 	if (ind < doc.length) {
