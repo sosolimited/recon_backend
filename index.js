@@ -205,7 +205,7 @@ function start() {
 		  common.mongo.authenticate(common.mongouser, common.mongopass, function(err, p_client) { 
 		  }); 
 		}
-	
+
 	  //default to scratch db, clear it, and unlock it
 	  common.startTime = new Date().getTime();
 	  common.setWriteDb('scratch');
@@ -228,6 +228,12 @@ function clearDB(dbSuffix)
 {
 
 	console.log('Clear DB:' + dbSuffix);	
+
+  // Remove the file.
+  try {
+  common.fs.unlinkSync("/tmp/test.json");
+  } catch (ex) { }
+
 
 	//clear out all the collections
 	common.mongo.collection("messages"+dbSuffix, function(err, collection) {
@@ -270,8 +276,10 @@ function loadDoc(docName, delay) {
 
 	console.log("d "+delay+" n "+docName);
 	
+	common.setWriteDb('1test');
 	unlockDb(true)
-	
+	common.sendLiveState();
+    
 	common.usingDoc = true; //JRO
 	
 	// reset start date
@@ -291,9 +299,9 @@ function loadDoc(docName, delay) {
 		}
 	} catch (e) {
 		console.log(e);
-	}		
+	}	
 }
-
+/*
 function loadHistory() {
 		common.mongo.collection('messages'+common.db_suffix, function(err, collection) {
 		collection.find(function(err, cursor) {
@@ -304,7 +312,7 @@ function loadHistory() {
 		});
 	});	
 }
-
+*/
 function sendCharsFromDoc() {
 
 	if (ind < doc.length) {
