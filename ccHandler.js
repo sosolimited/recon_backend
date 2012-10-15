@@ -128,7 +128,7 @@ function parseWords(text)
 			//spealer switching handled with special words
 			if (word && common.usingDoc)
 			{			
-				if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL" || word == "LEHRER") {
+				if (word == "MODERATOR" || word == "QUESTION" || word == "BROKAW" || word == "IFILL" || word == "LEHRER" || word == "RADDATZ") {
 					curSpeaker = 0;
 					speakerSwitch = true;
 				}
@@ -136,7 +136,7 @@ function parseWords(text)
 					curSpeaker = 1;
 					speakerSwitch = true;
 				}
-				else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN") {
+				else if (word == "MCCAIN" || word == "ROMNEY" || word == "PALIN" || word == "RYAN") {
 					curSpeaker = 2;
 					speakerSwitch = true;
 				}
