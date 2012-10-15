@@ -51,6 +51,7 @@ function sendMessage(msg, log) {
 	  //for printing all messages
 	  //console.log(msg);
 	}
+
 	updatePhantom(msg);
 
   // log msg
