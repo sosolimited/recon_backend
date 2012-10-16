@@ -389,7 +389,7 @@ function processNGrams(l, t, speaker, wID, sID, uniqueWDoc, ngrams, cb) {
 	else if (l == 4) curGram = cur4Gram;
 
 	// check for 2grams
-	if (curGram.length == l) {
+	if (curGram.length == l && (uniqueWDoc.word != 'Undefined') && (uniqueWDoc.word != 'undefined')) {
 		curGram.shift();
 		curGram.push(uniqueWDoc.word);
 		common.mongo.collection('unique_'+l+'grams'+common.db_suffix, function(e, c) {
