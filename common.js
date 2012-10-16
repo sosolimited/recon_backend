@@ -35,6 +35,13 @@ phantom.create(function(ph) {
     p.open("http://localhost:8000/?nosocket=true", function(status) {
       // The page is now ready to accept messages.
       page = p;
+
+      // Alter the viewport to something more common towards the iPad
+      // resolution.
+      page.set("viewportSize", { width: 1024, height: 768 });
+
+      // Save on performance... any more options we should set?
+      page.set("settings.loadImages", false);
     });
   });
 });
