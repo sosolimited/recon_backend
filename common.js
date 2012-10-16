@@ -106,16 +106,16 @@ function updatePhantom(msg) {
     // refactored.
     page.evaluate(function(message) {
       // shit code, rethink...
-      window.require(["app"], function(app) { app.handleMessage(JSON.parse(message)) });
+      window.require(["app"], function(app) { app.handleMessage(message) });
 
       return [window.document.querySelector("#transcript > .wrapper").innerHTML,
       window.document.querySelector("#bigWordsHolder").innerHTML];
-    }, JSON.stringify(msg), function(result) {
+    }, function(result) {
     	if (result) {
       	fs.writeFile("../recon_frontend/live.html", result[0]);
       	fs.writeFile("../recon_frontend/live_bigwords.html", result[1]);
       } else console.log("err no res");
-    });
+    }, msg);
   }
   
   
