@@ -7,7 +7,7 @@ var MongoServer = require('mongodb').Server;
 var ReplSetServers = require('mongodb').ReplSetServers;
 var engine = require("engine.io");
 var mongo;//
-var phantom = require("phantom");
+//var phantom = require("phantom");
 
 if (config.mongo.replica) {
 	var servers = [];
@@ -29,7 +29,7 @@ var usingDoc = false; //JRO
 
 var page;
 
-// Set up the headless environment.
+/*// Set up the headless environment.
 phantom.create(function(ph) {
   ph.createPage(function(p) {
     p.open("http://localhost:8000/?nosocket=true", function(status) {
@@ -38,6 +38,7 @@ phantom.create(function(ph) {
     });
   });
 });
+*/
 
 function sendMessage(msg, log) {
 
@@ -100,7 +101,7 @@ function sendLiveState(socket)
 
 
 function updatePhantom(msg) {
-  if (page) {
+  /*if (page) {
     // Send the message to the page directly.
     // I know, I know.  I'm doing a lot here, this should be most probably be
     // refactored.
@@ -120,7 +121,7 @@ function updatePhantom(msg) {
   
   
   // Append the message to the temporary messages file.
-  fs.appendFile('../recon_frontend/messages/' + db_suffix, JSON.stringify(msg) + '\n');	
+  fs.appendFile('../recon_frontend/messages/' + db_suffix, JSON.stringify(msg) + '\n');	*/
 }
 
 function setWriteDb(db) {
