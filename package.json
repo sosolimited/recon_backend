@@ -10,7 +10,7 @@
     "mongodb": "0.9.9-1",
     "engine.io": "0.2.2",
     "async": "0.1.22",
-    "phantom": "git://github.com/amir20/phantomjs-node.git#phantom-1.7-fix"
+    "phantom": "git://github.com/amir20/phantomjs-node.git#6a2333da07b55f19ad6706768836800985899d54"
   },
   "engines": {
     "node": "*"
