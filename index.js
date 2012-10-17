@@ -276,9 +276,9 @@ function loadDoc(docName, delay) {
 
 	console.log("d "+delay+" n "+docName);
 	
-	common.setWriteDb('1test');
-	unlockDb(true)
-	common.sendLiveState();
+	//common.setWriteDb('1test');
+	//unlockDb(true)
+	//common.sendLiveState();
     
 	common.usingDoc = true; //JRO
 	
