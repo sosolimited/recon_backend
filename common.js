@@ -59,7 +59,7 @@ function sendMessage(msg, log) {
   if (log) {
 	  mongo.collection('messages'+db_suffix, function(err, collection) {
 			collection.insert(msg);
-	  console.log("INSERTED IN 'messages"+db_suffix+msg);
+	  //console.log("INSERTED IN 'messages"+db_suffix+msg);
 		});
 	}	
 }
@@ -127,6 +127,8 @@ function updatePhantom(msg) {
 
 function setWriteDb(db) {
 
+	console.log("setWriteDb(" + db + ")");
+
 	switch (db) {
 		case '0':
 			db_suffix = '_d0';
@@ -136,6 +138,7 @@ function setWriteDb(db) {
 			break;
 		case '2':
 			db_suffix = '_d2';
+			break;
 			
 		case '0test':
 			db_suffix = '_d0test';

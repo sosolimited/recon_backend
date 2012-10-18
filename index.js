@@ -53,7 +53,7 @@ function start() {
 		if (msg.indexOf('use db') == 0) 
 		{
 			common.setWriteDb(msg.substring(7));
-			console.log("db_suffix = "+common.db_suffix);
+			console.log("Using DB: "+common.db_suffix);
 			//if (common.db_suffix == '_scratch') unlockDb(true);
 			//else unlockDb(false);
 			unlockDb(false);
@@ -89,7 +89,7 @@ function start() {
   common.engine.on("connection", function(socket) {
 	
     //curSocket = socket;
-    console.log("Connection " + socket.id + " accepted.");
+    //console.log("Connection " + socket.id + " accepted.");
     
     //send message: live
     common.sendLiveState(socket);
