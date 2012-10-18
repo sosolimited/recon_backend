@@ -7,6 +7,7 @@ var sentistrength = require(__dirname + "/sentistrength");
 //These variables need to remain global so that we can add to the buffers periodically
 var curWordBuffer = "";
 var curSentenceBuffer = "";
+var nextSentenceBuffer = "";
 var curEventID = 0;
 var curSpeaker = 0;
 var sentenceStartF = true;
@@ -115,7 +116,7 @@ function parseWords(text)
 
 			//look for final punctutation, the leftovers
 			var endPunct = tok.replace(word, "");
-			if (endPunct) console.log('punct ' + endPunct);
+			//if (endPunct) console.log('punct ' + endPunct);
 
 			// check if sentence end
 			if (endPunct.search(sentenceEndRegEx) != -1) {
@@ -171,7 +172,7 @@ function parseWords(text)
 						if (word)
 							handleWord(curSpeaker, leadPunct, word.toString(), endPunct, sentenceEnd, speakerSwitch); 
 					}
-				} else console.log ('parseWords(): DB is Locked, not adding data');
+				} //else console.log ('parseWords(): DB is Locked, not adding data');
 			}
 
 
@@ -306,7 +307,7 @@ function getCats(w, cb) {
 				common.mongo.collection('LIWC_wildcards', function(e, c) {
 					c.findOne({$where: "'"+w.toLowerCase()+"'.indexOf(this.word) == 0" }, function(err, wdoc) {
 						if (wdoc) {
-							console.log("WILDCARD:" + w + " CAT:" + wdoc.cat + " ORIGINAL:" + wdoc.word);
+							//console.log("WILDCARD:" + w + " CAT:" + wdoc.cat + " ORIGINAL:" + wdoc.word);
 							cb(null, cats.concat(wdoc.cat));
 						} 
 						else cb(null, cats);
@@ -469,14 +470,29 @@ function sendWord(cb, t, s, uniqueWDoc, w, punctuationF, ngramsArr)
 
 
 function handleSentenceEnd(timeDiff, speaker, cb) {
+		
+		//PEND: sentence termination is not properly handled. 
+		//trailing characters after the punct are not being trimed
+		//they also don't get passed to the next sentence
+		
 		// analyze sentiment
-  sentistrength(curSentenceBuffer, function(sentiment) {
-		sendSentenceEnd(timeDiff, speaker, sentiment, curSentenceBuffer.split(" ").length-1);
+		//sentistrength(curSentenceBuffer, function(sentiment) {
+		//sendSentenceEnd(timeDiff, speaker, sentiment, curSentenceBuffer.split(" ").length-1);
+		//console.log("Sentence: " + curSentenceBuffer);
+		
+		var index = curSentenceBuffer.search(sentenceEndRegEx);
+		nextSentenceBuffer = curSentenceBuffer.substring(index+2, curSentenceBuffer.length);
+		curSentenceBuffer = curSentenceBuffer.substring(0, index+1);
+		
+		console.log("Sentence: " + curSentenceBuffer);
+		//console.log(nextSentenceBuffer);
+		
+		sendSentenceEnd(timeDiff, speaker, [], curSentenceBuffer.split(" ").length-1);
 
-		console.log("senti "+sentiment);
+		//console.log("senti "+sentiment);
 
 		sentenceStartF = true;
-		curSentenceBuffer = "";
+		curSentenceBuffer = nextSentenceBuffer;
 
 		// reset ngrams at start of sentence
 		cur2Gram = [];
@@ -484,7 +500,7 @@ function handleSentenceEnd(timeDiff, speaker, cb) {
 		cur4Gram = [];
 
 		cb(null);
-	});
+	//});
 }
 
 
@@ -497,7 +513,7 @@ function sendSentenceEnd(t, speaker, senti, l)
 		sentiment: senti,
 		length: l
 	};
-	console.log("SENTENCE END!! "+message);
+	//console.log("SENTENCE END!! "+message);
 	common.sendMessage(message, true);
 }
 
