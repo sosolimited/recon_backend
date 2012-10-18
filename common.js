@@ -59,6 +59,7 @@ function sendMessage(msg, log) {
   if (log) {
 	  mongo.collection('messages'+db_suffix, function(err, collection) {
 			collection.insert(msg);
+	  console.log("INSERTED IN 'messages"+db_suffix+msg);
 		});
 	}	
 }
@@ -181,7 +182,7 @@ module.exports = {
 	fs : fs,	
 	
 	//JRO - now setting start time when you unlock a db
-	startTime : new Date(2012, 9, 3, 21), //defaults to first debate right now, update this!
+	startTime : new Date(2012, 9, 22, 21), //defaults to third debate right now
 	
 	lastCCTime : new Date().getTime(),
 	

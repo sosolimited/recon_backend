@@ -67,7 +67,7 @@ function start() {
 		else if (msg == 'unlock')
 		{
 			//JRO - setting the start time with an unlockDb
-			common.startTime = new Date().getTime();
+			//common.startTime = new Date().getTime(); // taking out, defaults to debate 3 time, but doesnt matter, offset is from 1st msg received anyway
 			unlockDb(true);
 
 			//broadcast live state with an unlock - must be done after unlocking
@@ -207,7 +207,7 @@ function start() {
 		}
 
 	  //default to scratch db, clear it, and unlock it
-	  common.startTime = new Date().getTime();
+	  //common.startTime = new Date().getTime(); // defaults to debate 3 time, but really doesn't matter, playback based on offset from 1st msg
 	  common.setWriteDb('scratch');
 	  unlockDb(false); //defualts to false
 	  clearDB(common.db_suffix);
@@ -276,14 +276,14 @@ function loadDoc(docName, delay) {
 
 	console.log("d "+delay+" n "+docName);
 	
-	common.setWriteDb('1test');
-	unlockDb(true)
-	common.sendLiveState();
+	//common.setWriteDb('1test');
+	//unlockDb(true)
+	//common.sendLiveState();
     
 	common.usingDoc = true; //JRO
 	
 	// reset start date
-	common.startTime = new Date().getTime();
+	common.startTime = new Date().getTime(); //only reset is here, for live the default is debate 3 time
 		
 	try {
 		doc = common.fs.readFileSync(__dirname + '/documents/' + docName, 'utf8');
