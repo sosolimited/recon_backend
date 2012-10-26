@@ -2,7 +2,7 @@ var common = require('./common.js');
 // Include the stanford named-entity recognition
 var namedentity = require(__dirname + "/named-entity");
 // Include sentistrength
-var sentistrength = require(__dirname + "/sentistrength");
+//var sentistrength = require(__dirname + "/sentistrength");
 
 //These variables need to remain global so that we can add to the buffers periodically
 var curWordBuffer = "";

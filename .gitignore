@@ -1,2 +1,4 @@
 node_modules/*
 config.json
+sentistrength/*
+LIWC_dictionary_Firebrand.xml
