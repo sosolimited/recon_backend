@@ -1,0 +1,12 @@
+{
+  "mongo": {
+    "user": "sosolimited",
+    "pass": "r3c0n12",
+    
+    "host": "localhost",
+    "port": 27017,
+    "db": "recon",
+    
+    "replica": false
+  }
+}

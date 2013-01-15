@@ -1,0 +1,13 @@
+{
+  "mongo": {
+    "user": "sosolimited",
+    "pass": "r3c0n12",
+    
+    "host": "ds039057-a0-internal.mongolab.com",                                                                   
+    "host2": "ds039057-a1-internal.mongolab.com",                                                                  
+    "port": 39057,  
+    "db": "recon",
+    
+    "replica": true
+  }
+}
